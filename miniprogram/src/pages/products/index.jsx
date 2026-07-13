@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, Input, ScrollView } from '@tarojs/components'
+import { View, Text, Image, Input, ScrollView } from '@tarojs/components'
 import Taro, { usePullDownRefresh } from '@tarojs/taro'
 import { request } from '../../utils/api'
 import { getPlaceholderGrad } from '../../utils/constants'
@@ -79,18 +79,36 @@ export default function Products() {
       </ScrollView>
 
       <View className='prod-grid'>
-        {products.map((p, i) => (
-          <View key={p.id} className='prod-card' onClick={() => goDetail(p.id)}>
-            <View className='prod-img' style={{ background: getPlaceholderGrad(i) }}>
-              {p.is_hot && <View className='prod-hot'><Text className='prod-hot-t'>热</Text></View>}
+        {products.map((p, i) => {
+          const coverUrl = p.images && p.images[0] && p.images[0].url
+          const hasPrice = p.show_price && p.price != null
+          const hasDiscount = hasPrice && p.discount_price != null
+          return (
+            <View key={p.id} className='prod-card' onClick={() => goDetail(p.id)}>
+              <View className='prod-img' style={coverUrl ? {} : { background: getPlaceholderGrad(i) }}>
+                {coverUrl && <Image className='prod-cover' src={coverUrl} mode='aspectFill' />}
+                {p.is_hot && <View className='prod-hot'><Text className='prod-hot-t'>热</Text></View>}
+              </View>
+              <View className='prod-info'>
+                <Text className='prod-name'>{p.model || p.name}</Text>
+                {hasPrice ? (
+                  <View className='prod-price-row'>
+                    {hasDiscount ? (
+                      <>
+                        <Text className='prod-price-discount'>¥{parseFloat(p.discount_price).toFixed(2)}</Text>
+                        <Text className='prod-price-original'>¥{parseFloat(p.price).toFixed(2)}</Text>
+                      </>
+                    ) : (
+                      <Text className='prod-price'>¥{parseFloat(p.price).toFixed(2)}</Text>
+                    )}
+                  </View>
+                ) : (
+                  <Text className='prod-cat'>{p.category_name}</Text>
+                )}
+              </View>
             </View>
-            <View className='prod-info'>
-              <Text className='prod-name'>{p.name}</Text>
-              {p.model ? <Text className='prod-model'>{p.model}</Text> : null}
-              <Text className='prod-cat'>{p.category_name}</Text>
-            </View>
-          </View>
-        ))}
+          )
+        })}
       </View>
 
       {loading && (

@@ -110,6 +110,7 @@ def seed():
                 "INSERT OR IGNORE INTO product (id, name, model, category_id, sort_order) VALUES (?, ?, ?, ?, ?)",
                 (product_id, f"{display_name} {seq:02d}", f"TBD_{product_id:04d}", cat_id, seq),
             )
+            # model is the primary identifier; name is kept for legacy compat
             product_id += 1
         # 补足 product_id 计数
         # (已在循环内自增)

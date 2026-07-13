@@ -25,6 +25,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
@@ -40,6 +43,47 @@ export default function ProductsPage() {
   );
 }
 
+type SortBy = "default" | "model" | "category" | "id";
+type SortDir = "asc" | "desc";
+
+function SortHeader({
+  label,
+  field,
+  currentSort,
+  currentDir,
+  onSort,
+  width,
+}: {
+  label: string;
+  field: SortBy;
+  currentSort: SortBy;
+  currentDir: SortDir;
+  onSort: (field: SortBy) => void;
+  width?: number;
+}) {
+  const active = currentSort === field;
+  return (
+    <th
+      className={`${styles.th} ${styles.thSortable} ${active ? styles.thActive : ""}`}
+      style={width ? { width } : undefined}
+      onClick={() => onSort(field)}
+    >
+      <span className={styles.thInner}>
+        {label}
+        {active ? (
+          currentDir === "asc" ? (
+            <ArrowUp size={12} />
+          ) : (
+            <ArrowDown size={12} />
+          )
+        ) : (
+          <ArrowUpDown size={12} className={styles.sortIcon} />
+        )}
+      </span>
+    </th>
+  );
+}
+
 function ProductsInner() {
   const qc = useQueryClient();
   const router = useRouter();
@@ -49,6 +93,8 @@ function ProductsInner() {
   const categoryId = searchParams.get("category_id")
     ? Number(searchParams.get("category_id"))
     : undefined;
+  const sortBy = (searchParams.get("sort_by") as SortBy) ?? "default";
+  const sortDir = (searchParams.get("sort_dir") as SortDir) ?? "asc";
 
   const [keyword, setKeyword] = useState(searchParams.get("keyword") ?? "");
   const [searchInput, setSearchInput] = useState(keyword);
@@ -64,14 +110,24 @@ function ProductsInner() {
     router.push(`/products?${sp.toString()}`);
   }
 
+  function handleSortClick(field: SortBy) {
+    if (sortBy === field) {
+      pushParams({ sort_by: field, sort_dir: sortDir === "asc" ? "desc" : "asc" });
+    } else {
+      pushParams({ sort_by: field, sort_dir: "asc" });
+    }
+  }
+
   const { data, isPending } = useQuery({
-    queryKey: ["products", { page, page_size: PAGE_SIZE, categoryId, keyword }],
+    queryKey: ["products", { page, page_size: PAGE_SIZE, categoryId, keyword, sortBy, sortDir }],
     queryFn: () =>
       fetchProducts({
         page,
         page_size: PAGE_SIZE,
         category_id: categoryId,
         keyword: keyword || undefined,
+        sort_by: sortBy !== "default" ? sortBy : undefined,
+        sort_dir: sortDir !== "asc" ? sortDir : undefined,
       }),
   });
 
@@ -135,7 +191,7 @@ function ProductsInner() {
             <Search size={14} className={styles.searchIcon} />
             <input
               className={styles.searchInput}
-              placeholder="搜索产品名称或型号…"
+              placeholder="搜索型号…"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
@@ -172,16 +228,29 @@ function ProductsInner() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th className={styles.th} style={{ width: 60 }}>
-                ID
-              </th>
-              <th className={styles.th}>产品名称</th>
-              <th className={styles.th} style={{ width: 130 }}>
-                型号
-              </th>
-              <th className={styles.th} style={{ width: 120 }}>
-                品类
-              </th>
+              <SortHeader
+                label="ID"
+                field="id"
+                currentSort={sortBy}
+                currentDir={sortDir}
+                onSort={handleSortClick}
+                width={60}
+              />
+              <SortHeader
+                label="型号"
+                field="model"
+                currentSort={sortBy}
+                currentDir={sortDir}
+                onSort={handleSortClick}
+              />
+              <SortHeader
+                label="品类"
+                field="category"
+                currentSort={sortBy}
+                currentDir={sortDir}
+                onSort={handleSortClick}
+                width={140}
+              />
               <th className={styles.th} style={{ width: 70 }}>
                 热门
               </th>
@@ -194,7 +263,7 @@ function ProductsInner() {
             {isPending
               ? Array.from({ length: 10 }).map((_, i) => (
                   <tr key={i} className={styles.tr}>
-                    {Array.from({ length: 6 }).map((_, j) => (
+                    {Array.from({ length: 5 }).map((_, j) => (
                       <td key={j} className={styles.td}>
                         <div className={`skeleton ${styles.skeletonCell}`} />
                       </td>
@@ -208,16 +277,13 @@ function ProductsInner() {
                     </td>
                     <td className={styles.td}>
                       <div className={styles.productName}>
-                        <span className={styles.name}>{product.name}</span>
+                        <span className={styles.name}>{product.model || "—"}</span>
                         {product.description && (
                           <span className={styles.desc} title={product.description}>
                             {product.description}
                           </span>
                         )}
                       </div>
-                    </td>
-                    <td className={styles.td}>
-                      <span className={styles.model}>{product.model || "—"}</span>
                     </td>
                     <td className={styles.td}>
                       {product.category_id ? (
@@ -324,7 +390,7 @@ function ProductsInner() {
         onClose={() => setDeletingId(null)}
         onConfirm={() => deletingId && deleteMut.mutate(deletingId)}
         title="删除产品"
-        description={`确认删除产品「${deletingItem?.name ?? ""}」？此操作不可撤销。`}
+        description={`确认删除产品「${deletingItem?.model ?? ""}」？此操作不可撤销。`}
         loading={deleteMut.isPending}
       />
     </div>

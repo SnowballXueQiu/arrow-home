@@ -59,8 +59,8 @@ export default function EditProductPage({
   return (
     <div className={styles.page}>
       <PageHeader
-        title={product.name}
-        description={`型号：${product.model || "—"}  ·  ID: ${product.id}`}
+        title={product.model || `产品 #${product.id}`}
+        description={`ID: ${product.id}${product.category_name ? `  ·  ${product.category_name}` : ""}`}
         action={
           <Link href="/products">
             <Button variant="secondary" icon={<ArrowLeft size={14} />}>

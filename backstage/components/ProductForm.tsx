@@ -148,7 +148,6 @@ function SortableVariantRow({
 }
 
 export function ProductForm({ initial, onSave, loading }: Props) {
-  const [name, setName] = useState(initial?.name ?? "");
   const [model, setModel] = useState(initial?.model ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [categoryId, setCategoryId] = useState<string>(
@@ -249,7 +248,6 @@ export function ProductForm({ initial, onSave, loading }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await onSave({
-      name: name.trim(),
       model: model.trim(),
       description: description.trim(),
       category_id: categoryId ? Number(categoryId) : null,
@@ -276,28 +274,17 @@ export function ProductForm({ initial, onSave, loading }: Props) {
       {/* Basic Info */}
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>基本信息</h3>
-        <div className={styles.grid2}>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              产品名称 <span className={styles.required}>*</span>
-            </label>
-            <input
-              className={styles.input}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="例：箭牌智能坐便器"
-              required
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>型号</label>
-            <input
-              className={styles.input}
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              placeholder="例：AKB1312"
-            />
-          </div>
+        <div className={styles.field}>
+          <label className={styles.label}>
+            型号 <span className={styles.required}>*</span>
+          </label>
+          <input
+            className={styles.input}
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            placeholder="例：AKB1312"
+            required
+          />
         </div>
         <div className={styles.field}>
           <label className={styles.label}>产品描述</label>

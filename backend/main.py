@@ -50,8 +50,8 @@ class ImageItem(BaseModel):
 
 
 class ProductCreate(BaseModel):
-    name: str
-    model: str = ""
+    name: str = ""
+    model: str
     description: str = ""
     category_id: int | None = None
     is_hot: bool = False
@@ -160,10 +160,19 @@ def list_categories(parent_id: int | None = None, flat: bool = False):
         db.close()
         return [dict(r) for r in rows]
 
-    rows = db.execute("SELECT * FROM category ORDER BY sort_order").fetchall()
-    items = [dict(r) for r in rows]
-
     if flat:
+        rows = db.execute(
+            """
+            SELECT c.*
+            FROM category c
+            LEFT JOIN category p ON c.parent_id = p.id
+            ORDER BY
+              COALESCE(p.sort_order, c.sort_order),
+              c.parent_id IS NOT NULL,
+              c.sort_order
+            """
+        ).fetchall()
+        items = [dict(r) for r in rows]
         counts = db.execute(
             "SELECT category_id, COUNT(*) as cnt FROM product GROUP BY category_id"
         ).fetchall()
@@ -172,6 +181,9 @@ def list_categories(parent_id: int | None = None, flat: bool = False):
         for item in items:
             item["product_count"] = count_map.get(item["id"], 0)
         return items
+
+    rows = db.execute("SELECT * FROM category ORDER BY sort_order").fetchall()
+    items = [dict(r) for r in rows]
     db.close()
 
     # 构建树
@@ -208,6 +220,17 @@ def delete_category(cat_id: int):
     return {"ok": True}
 
 
+@app.get("/categories/{cat_id}/products")
+def list_category_products(cat_id: int):
+    db = get_db()
+    rows = db.execute(
+        "SELECT id, model, name, is_hot FROM product WHERE category_id = ? ORDER BY sort_order, id",
+        (cat_id,),
+    ).fetchall()
+    db.close()
+    return [dict(r) for r in rows]
+
+
 # --- Products ---
 
 
@@ -241,6 +264,8 @@ def list_products(
     category_id: int | None = None,
     keyword: str | None = None,
     include_subcategories: bool = False,
+    sort_by: str = Query("default", pattern="^(default|model|category|id)$"),
+    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
 ):
     db = get_db()
     conditions = []
@@ -268,13 +293,20 @@ def list_products(
         f"SELECT COUNT(*) FROM product p {where}", params
     ).fetchone()[0]
 
+    dir_sql = "DESC" if sort_dir == "desc" else "ASC"
+    order_sql = {
+        "model": f"p.model {dir_sql}",
+        "category": f"c.name {dir_sql}, p.model ASC",
+        "id": f"p.id {dir_sql}",
+    }.get(sort_by, f"p.sort_order ASC, p.id ASC")
+
     rows = db.execute(
         f"""
         SELECT p.*, c.name as category_name
         FROM product p
         LEFT JOIN category c ON p.category_id = c.id
         {where}
-        ORDER BY p.sort_order, p.id
+        ORDER BY {order_sql}
         LIMIT ? OFFSET ?
         """,
         params + [page_size, offset],
@@ -285,6 +317,12 @@ def list_products(
         item = dict(r)
         item["is_hot"] = bool(item["is_hot"])
         item["show_price"] = bool(item.get("show_price", 0))
+        # attach first image for list cover
+        cover = db.execute(
+            "SELECT url FROM product_image WHERE product_id = ? ORDER BY sort_order LIMIT 1",
+            (item["id"],),
+        ).fetchone()
+        item["images"] = [{"url": cover["url"], "sort_order": 0}] if cover else []
         items.append(item)
 
     db.close()
@@ -355,6 +393,8 @@ def get_product(product_id: int):
 
 @app.post("/products")
 def create_product(req: ProductCreate):
+    if not req.model.strip():
+        raise HTTPException(400, "型号不能为空")
     db = get_db()
     cursor = db.execute(
         "INSERT INTO product (name, model, description, category_id, is_hot, sort_order, price, discount_price, show_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -387,6 +427,8 @@ def create_product(req: ProductCreate):
 
 @app.put("/products/{product_id}")
 def update_product(product_id: int, req: ProductUpdate):
+    if req.model is not None and not req.model.strip():
+        raise HTTPException(400, "型号不能为空")
     db = get_db()
     row = db.execute("SELECT id FROM product WHERE id = ?", (product_id,)).fetchone()
     if not row:

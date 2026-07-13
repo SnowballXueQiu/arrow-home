@@ -65,6 +65,7 @@ export interface Product {
   id: number;
   name: string;
   model: string;
+  // model is the primary display identifier; name is optional/legacy
   description: string;
   category_id: number | null;
   category_name?: string;
@@ -109,14 +110,23 @@ export const fetchProducts = (params: {
   page_size?: number;
   category_id?: number;
   keyword?: string;
+  sort_by?: string;
+  sort_dir?: string;
 }) => {
   const q = new URLSearchParams();
   if (params.page) q.set("page", String(params.page));
   if (params.page_size) q.set("page_size", String(params.page_size));
   if (params.category_id) q.set("category_id", String(params.category_id));
   if (params.keyword) q.set("keyword", params.keyword);
+  if (params.sort_by) q.set("sort_by", params.sort_by);
+  if (params.sort_dir) q.set("sort_dir", params.sort_dir);
   return api.get<ProductListResponse>(`/products?${q.toString()}`);
 };
+
+export const fetchCategoryProducts = (catId: number) =>
+  api.get<{ id: number; model: string; name: string; is_hot: number }[]>(
+    `/categories/${catId}/products`
+  );
 
 export const fetchProduct = (id: number) =>
   api.get<Product>(`/products/${id}`);

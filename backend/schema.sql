@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS category (
 
 CREATE TABLE IF NOT EXISTS product (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    model TEXT DEFAULT '',
+    name TEXT DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
     description TEXT DEFAULT '',
     category_id INTEGER,
     is_hot INTEGER DEFAULT 0,

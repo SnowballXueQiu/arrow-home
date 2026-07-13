@@ -111,6 +111,30 @@
   white-space: nowrap;
 }
 
+.thSortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.thSortable:hover {
+  background: var(--bg-4);
+  color: var(--text-secondary);
+}
+
+.thActive {
+  color: var(--accent);
+}
+
+.thInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sortIcon {
+  opacity: 0.35;
+}
+
 .tr {
   transition: background 0.1s;
 }

@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchCategoryTree, createCategory, deleteCategory } from "@/lib/api";
+import { fetchCategoryTree, createCategory, deleteCategory, fetchCategoryProducts } from "@/lib/api";
 import type { Category } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Package } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import Link from "next/link";
 import { toast } from "sonner";
 import styles from "./categories.module.css";
 
@@ -17,6 +18,7 @@ export default function CategoriesPage() {
   const qc = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [viewingCat, setViewingCat] = useState<{ id: number; name: string } | null>(null);
   const [form, setForm] = useState({ name: "", parent_id: "" });
 
   const { data: tree = [], isPending } = useQuery({
@@ -28,6 +30,12 @@ export default function CategoriesPage() {
     queryKey: ["categories", "flat"],
     queryFn: () =>
       fetch("/backend/categories?flat=true").then((r) => r.json()) as Promise<(Category & { product_count: number })[]>,
+  });
+
+  const { data: catProducts = [], isPending: catProductsPending } = useQuery({
+    queryKey: ["category-products", viewingCat?.id],
+    queryFn: () => fetchCategoryProducts(viewingCat!.id),
+    enabled: !!viewingCat,
   });
 
   const productCountMap = Object.fromEntries(flatList.map((c) => [c.id, c.product_count ?? 0]));
@@ -124,9 +132,19 @@ export default function CategoriesPage() {
                       {cat.children.length} 个子品类
                     </span>
                   )}
-                  <span className={styles.productCount}>
-                    {productCountMap[cat.id] ?? 0} 个商品
-                  </span>
+                  {(productCountMap[cat.id] ?? 0) > 0 && (
+                    <button
+                      className={styles.productCountBtn}
+                      onClick={() => setViewingCat({ id: cat.id, name: cat.name })}
+                      title="查看商品"
+                    >
+                      <Package size={11} />
+                      {productCountMap[cat.id]} 个商品
+                    </button>
+                  )}
+                  {(productCountMap[cat.id] ?? 0) === 0 && (
+                    <span className={styles.productCount}>0 个商品</span>
+                  )}
                 </div>
                 <div className={styles.rowRight}>
                   <span className={styles.catId}>#{idx}</span>
@@ -199,6 +217,40 @@ export default function CategoriesPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* View Category Products Modal */}
+      <Modal
+        open={!!viewingCat}
+        onClose={() => setViewingCat(null)}
+        title={viewingCat ? `${viewingCat.name} · 商品列表` : ""}
+        width={500}
+      >
+        <div className={styles.productList}>
+          {catProductsPending ? (
+            <div className={styles.productListLoading}>加载中…</div>
+          ) : catProducts.length === 0 ? (
+            <div className={styles.productListEmpty}>暂无商品</div>
+          ) : (
+            catProducts.map((p) => (
+              <Link
+                key={p.id}
+                href={`/products/${p.id}`}
+                className={styles.productItem}
+                onClick={() => setViewingCat(null)}
+              >
+                <span className={styles.productItemId}>#{p.id}</span>
+                <span className={styles.productItemModel}>{p.model}</span>
+                {p.is_hot ? <span className={styles.productItemHot}>热</span> : null}
+              </Link>
+            ))
+          )}
+        </div>
+        <div className={styles.productListFooter}>
+          <Button variant="secondary" onClick={() => setViewingCat(null)}>
+            关闭
+          </Button>
+        </div>
       </Modal>
 
       {/* Confirm Delete */}
