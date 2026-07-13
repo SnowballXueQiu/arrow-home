@@ -1,0 +1,139 @@
+.mine {
+  background: var(--cream);
+  min-height: 100vh;
+  padding-bottom: 80rpx;
+}
+
+/* HEADER */
+.mine-header {
+  background: var(--white);
+  padding: 60rpx 40rpx 48rpx;
+  display: flex;
+  align-items: center;
+  gap: 32rpx;
+  border-bottom: 1rpx solid var(--border);
+}
+.mine-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #2a2818 0%, #3e3220 100%);
+  border: 3rpx solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mine-avatar-text {
+  font-size: 48rpx;
+  font-weight: 300;
+  color: var(--gold);
+}
+.mine-user {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+.mine-name {
+  font-size: 40rpx;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 1rpx;
+}
+.mine-name--hint {
+  color: var(--gold);
+  font-weight: 400;
+}
+.mine-hint-sub {
+  font-size: 23rpx;
+  color: var(--ink-dim);
+}
+.mine-role-tag {
+  align-self: flex-start;
+  padding: 6rpx 20rpx;
+  background: var(--gold-pale);
+  border-radius: 100rpx;
+}
+.mine-role-text {
+  font-size: 21rpx;
+  color: var(--gold);
+  letter-spacing: 2rpx;
+}
+
+/* CARD */
+.mine-card {
+  margin: 24rpx 24rpx 0;
+  background: var(--white);
+  border-radius: 18rpx;
+  padding: 0 28rpx;
+  box-shadow: var(--shadow-sm);
+}
+.mine-card-label {
+  display: block;
+  font-size: 20rpx;
+  font-weight: 600;
+  letter-spacing: 4rpx;
+  color: var(--gold);
+  padding: 24rpx 0 12rpx;
+  border-bottom: 1rpx solid var(--border);
+}
+.mine-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+.mine-row--last { border-bottom: none; }
+.mine-row-k {
+  font-size: 26rpx;
+  color: var(--ink-dim);
+}
+.mine-row-v {
+  font-size: 26rpx;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* ACTIONS */
+.mine-actions {
+  margin: 32rpx 24rpx 0;
+}
+.mine-btn {
+  height: 96rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:active { opacity: 0.8; }
+}
+.mine-btn--in { background: var(--ink); }
+.mine-btn--out {
+  background: var(--white);
+  border: 1rpx solid rgba(200,60,60,0.2);
+}
+.mine-btn-text { font-size: 28rpx; font-weight: 500; letter-spacing: 3rpx; }
+.mine-btn-text--in { color: #fff; }
+.mine-btn-text--out { color: #c84040; }
+
+/* FOOTER */
+.mine-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  padding: 72rpx 0 32rpx;
+}
+.mine-footer-brand {
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 12rpx;
+  color: var(--ink-dim);
+  opacity: 0.3;
+}
+.mine-footer-sub {
+  font-size: 20rpx;
+  color: var(--ink-dim);
+  letter-spacing: 3rpx;
+  opacity: 0.4;
+}

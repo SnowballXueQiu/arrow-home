@@ -1,0 +1,27 @@
+.page {
+  animation: fadeIn 0.2s ease both;
+}
+
+.loading {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeletonLine {
+  height: 24px;
+}
+
+.skeletonLine:first-child { width: 60%; }
+.skeletonLine:nth-child(2) { width: 40%; }
+.skeletonLine:nth-child(3) { width: 80%; }
+.skeletonLine:nth-child(4) { width: 70%; }
+.skeletonLine:nth-child(5) { width: 50%; }
+.skeletonLine:nth-child(6) { width: 65%; }
+
+.notFound {
+  padding: 48px 32px;
+  color: var(--text-muted);
+  font-size: 14px;
+}

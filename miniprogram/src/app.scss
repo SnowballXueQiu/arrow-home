@@ -1,0 +1,23 @@
+page {
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  background: #f5f4f0;
+  color: #1a1a1a;
+  font-size: 28rpx;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --ink:        #1a1a1a;
+  --ink-mid:    #555;
+  --ink-dim:    #999;
+  --cream:      #f5f4f0;
+  --cream-dark: #ede9e2;
+  --gold:       #b8975a;
+  --gold-light: #d4b47a;
+  --gold-pale:  #f0e8d6;
+  --white:      #ffffff;
+  --border:     rgba(0,0,0,0.08);
+  --shadow-sm:  0 2rpx 16rpx rgba(0,0,0,0.06);
+  --shadow-md:  0 6rpx 32rpx rgba(0,0,0,0.10);
+}

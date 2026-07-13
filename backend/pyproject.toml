@@ -1,0 +1,14 @@
+[project]
+name = "arrow-home-backend"
+version = "0.1.0"
+description = "箭牌卫浴产品展示后端"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "pydantic>=2.0.0",
+    "fastapi-mcp>=0.4.0",
+]
+
+[dependency-groups]
+dev = []

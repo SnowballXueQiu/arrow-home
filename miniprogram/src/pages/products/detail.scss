@@ -1,0 +1,152 @@
+.detail {
+  background: var(--cream);
+  min-height: 100vh;
+  padding-bottom: 80rpx;
+}
+
+.detail-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.detail-loading-text {
+  font-size: 28rpx;
+  color: var(--ink-dim);
+}
+
+/* GALLERY */
+.gallery {
+  position: relative;
+  background: var(--white);
+}
+.gallery-swiper { height: 560rpx; }
+.gallery-slide { height: 100%; width: 100%; }
+.gallery-counter {
+  position: absolute;
+  bottom: 20rpx;
+  right: 24rpx;
+  background: rgba(0,0,0,0.35);
+  border-radius: 100rpx;
+  padding: 6rpx 20rpx;
+}
+.gallery-counter-t {
+  font-size: 22rpx;
+  color: #fff;
+}
+
+/* BODY */
+.detail-body {
+  margin: 0 24rpx;
+  padding-top: 28rpx;
+}
+
+.detail-tags {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 18rpx;
+}
+.dtag {
+  padding: 6rpx 20rpx;
+  background: var(--gold-pale);
+  border-radius: 100rpx;
+}
+.dtag--hot {
+  background: var(--gold);
+  .dtag-text { color: #fff; font-weight: 600; }
+}
+.dtag-text {
+  font-size: 21rpx;
+  color: var(--gold);
+  letter-spacing: 2rpx;
+}
+
+.detail-name {
+  display: block;
+  font-size: 52rpx;
+  font-weight: 300;
+  color: var(--ink);
+  letter-spacing: 1rpx;
+  line-height: 1.2;
+  margin-bottom: 16rpx;
+}
+
+.detail-model-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.detail-model-label {
+  font-size: 21rpx;
+  color: var(--ink-dim);
+  letter-spacing: 2rpx;
+}
+.detail-model-val {
+  font-size: 26rpx;
+  color: var(--ink-mid);
+}
+
+.detail-sep {
+  height: 1rpx;
+  background: var(--border);
+  margin: 36rpx 0 28rpx;
+}
+
+/* DESC */
+.detail-desc-label {
+  display: block;
+  font-size: 20rpx;
+  font-weight: 600;
+  letter-spacing: 4rpx;
+  color: var(--gold);
+  margin-bottom: 14rpx;
+}
+.detail-desc {
+  font-size: 27rpx;
+  color: var(--ink-mid);
+  line-height: 1.9;
+}
+
+/* ATTRS */
+.attrs-label {
+  display: block;
+  font-size: 20rpx;
+  font-weight: 600;
+  letter-spacing: 4rpx;
+  color: var(--gold);
+  margin-bottom: 16rpx;
+}
+.attr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 20rpx;
+  border-radius: 10rpx;
+}
+.attr-row--alt {
+  background: var(--cream-dark);
+}
+.attr-k {
+  font-size: 25rpx;
+  color: var(--ink-dim);
+  width: 200rpx;
+  flex-shrink: 0;
+}
+.attr-v {
+  flex: 1;
+  font-size: 25rpx;
+  color: var(--ink);
+  text-align: right;
+}
+
+/* FOOTER */
+.detail-footer {
+  display: flex;
+  justify-content: center;
+  padding: 48rpx 0 16rpx;
+}
+.detail-footer-text {
+  font-size: 19rpx;
+  letter-spacing: 6rpx;
+  color: var(--ink-dim);
+}

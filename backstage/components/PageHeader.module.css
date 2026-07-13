@@ -1,0 +1,32 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 32px 32px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+}
+
+.desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.action {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+}

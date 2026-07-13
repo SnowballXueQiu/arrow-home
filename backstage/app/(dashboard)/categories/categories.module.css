@@ -1,0 +1,164 @@
+.page {
+  animation: fadeIn 0.2s ease both;
+}
+
+.content {
+  padding: 24px 32px;
+}
+
+.tree {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-right: 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: var(--bg-3);
+}
+
+.topLevel {
+  background: var(--bg-2);
+}
+
+.child {
+  background: transparent;
+}
+
+.rowLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.folderIcon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.folderIconChild {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.catName {
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.childCount {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-4);
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.rowRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.catId {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.deleteBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s, background 0.1s, color 0.1s;
+}
+
+.row:hover .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  background: var(--danger-dim);
+  color: var(--danger);
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skeletonRow {
+  height: 42px;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.input {
+  height: 38px;
+  padding: 0 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--accent);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}

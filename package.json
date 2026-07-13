@@ -1,0 +1,16 @@
+{
+  "name": "arrow-home",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm dev:backend & pnpm --filter miniprogram dev:weapp & pnpm --filter backstage dev",
+    "dev:all": "pnpm dev:backend & pnpm --filter miniprogram dev:weapp & pnpm --filter backstage dev",
+    "dev:backstage": "pnpm --filter backstage dev",
+    "build": "pnpm build:backend && pnpm build:weapp",
+    "build:weapp": "pnpm --filter miniprogram build:weapp",
+    "build:backstage": "pnpm --filter backstage build",
+    "build:backend": "cd backend && uv sync",
+    "dev:backend": "cd backend && uv run python main.py",
+    "postinstall": "cd backend && uv sync"
+  }
+}
