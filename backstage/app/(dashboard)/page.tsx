@@ -44,7 +44,7 @@ export default function DashboardPage() {
       href: "/categories",
     },
     {
-      label: "叶子品类",
+      label: "子品类",
       value: leafCount,
       icon: Layers,
       color: "green",
