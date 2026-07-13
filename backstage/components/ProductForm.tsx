@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCategories } from "@/lib/api";
 import type { Product, ProductAttribute, ProductVariant } from "@/lib/api";
@@ -42,6 +42,7 @@ interface Props {
   initial?: Partial<Product>;
   onSave: (data: Partial<Product>) => Promise<void>;
   loading?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 function uid() {
@@ -147,7 +148,7 @@ function SortableVariantRow({
   );
 }
 
-export function ProductForm({ initial, onSave, loading }: Props) {
+export function ProductForm({ initial, onSave, loading, onDirtyChange }: Props) {
   const [model, setModel] = useState(initial?.model ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [categoryId, setCategoryId] = useState<string>(
@@ -175,6 +176,21 @@ export function ProductForm({ initial, onSave, loading }: Props) {
     queryKey: ["categories", "flat"],
     queryFn: fetchCategories,
   });
+
+  // Track dirty state — compare current values to initial
+  const savedRef = useRef(false);
+  useEffect(() => {
+    if (savedRef.current) return;
+    const dirty =
+      model !== (initial?.model ?? "") ||
+      description !== (initial?.description ?? "") ||
+      categoryId !== (initial?.category_id ? String(initial.category_id) : "") ||
+      isHot !== (initial?.is_hot ?? false) ||
+      attrs.length !== (initial?.attributes?.length ?? 0) ||
+      variants.length !== (initial?.variants?.length ?? 0) ||
+      images.length !== (initial?.images?.length ?? 0);
+    onDirtyChange?.(dirty);
+  }, [model, description, categoryId, isHot, attrs, variants, images]);
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -247,6 +263,8 @@ export function ProductForm({ initial, onSave, loading }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    savedRef.current = true;
+    onDirtyChange?.(false);
     await onSave({
       model: model.trim(),
       description: description.trim(),
