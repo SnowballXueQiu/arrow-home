@@ -181,16 +181,21 @@ export function ProductForm({ initial, onSave, loading, onDirtyChange }: Props) 
   const savedRef = useRef(false);
   useEffect(() => {
     if (savedRef.current) return;
+    const initialPrice = initial?.price != null ? String(initial.price) : "";
+    const initialDiscount = initial?.discount_price != null ? String(initial.discount_price) : "";
     const dirty =
       model !== (initial?.model ?? "") ||
       description !== (initial?.description ?? "") ||
       categoryId !== (initial?.category_id ? String(initial.category_id) : "") ||
       isHot !== (initial?.is_hot ?? false) ||
+      price !== initialPrice ||
+      discountPrice !== initialDiscount ||
+      showPrice !== (initial?.show_price ?? false) ||
       attrs.length !== (initial?.attributes?.length ?? 0) ||
       variants.length !== (initial?.variants?.length ?? 0) ||
       images.length !== (initial?.images?.length ?? 0);
     onDirtyChange?.(dirty);
-  }, [model, description, categoryId, isHot, attrs, variants, images]);
+  }, [model, description, categoryId, isHot, price, discountPrice, showPrice, attrs, variants, images]);
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -358,12 +363,15 @@ export function ProductForm({ initial, onSave, loading, onDirtyChange }: Props) 
               <span className={styles.prefix}>¥</span>
               <input
                 className={`${styles.input} ${styles.inputWithPrefix}`}
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 placeholder="未设置"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "" || /^\d*\.?\d{0,2}$/.test(v)) setPrice(v);
+                }}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
               />
             </div>
           </div>
@@ -373,12 +381,15 @@ export function ProductForm({ initial, onSave, loading, onDirtyChange }: Props) 
               <span className={styles.prefix}>¥</span>
               <input
                 className={`${styles.input} ${styles.inputWithPrefix}`}
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 placeholder="不填则无折扣"
                 value={discountPrice}
-                onChange={(e) => setDiscountPrice(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "" || /^\d*\.?\d{0,2}$/.test(v)) setDiscountPrice(v);
+                }}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
               />
             </div>
           </div>
