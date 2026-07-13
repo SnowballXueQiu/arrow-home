@@ -70,6 +70,14 @@
   border-radius: 10px;
 }
 
+.productCount {
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
 .rowRight {
   display: flex;
   align-items: center;

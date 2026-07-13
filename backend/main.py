@@ -161,11 +161,18 @@ def list_categories(parent_id: int | None = None, flat: bool = False):
         return [dict(r) for r in rows]
 
     rows = db.execute("SELECT * FROM category ORDER BY sort_order").fetchall()
-    db.close()
     items = [dict(r) for r in rows]
 
     if flat:
+        counts = db.execute(
+            "SELECT category_id, COUNT(*) as cnt FROM product GROUP BY category_id"
+        ).fetchall()
+        count_map = {r["category_id"]: r["cnt"] for r in counts}
+        db.close()
+        for item in items:
+            item["product_count"] = count_map.get(item["id"], 0)
         return items
+    db.close()
 
     # 构建树
     by_id = {item["id"]: {**item, "children": []} for item in items}
@@ -515,7 +522,7 @@ def delete_announcement(ann_id: int):
 
 
 mcp = FastApiMCP(app)
-mcp.mount()
+mcp.mount_http()
 
 if __name__ == "__main__":
     import uvicorn

@@ -27,8 +27,10 @@ export default function CategoriesPage() {
   const { data: flatList = [] } = useQuery({
     queryKey: ["categories", "flat"],
     queryFn: () =>
-      fetch("/backend/categories?flat=true").then((r) => r.json()) as Promise<Category[]>,
+      fetch("/backend/categories?flat=true").then((r) => r.json()) as Promise<(Category & { product_count: number })[]>,
   });
+
+  const productCountMap = Object.fromEntries(flatList.map((c) => [c.id, c.product_count ?? 0]));
 
   const createMut = useMutation({
     mutationFn: (d: { name: string; parent_id: number | null; sort_order: number }) =>
@@ -122,6 +124,9 @@ export default function CategoriesPage() {
                       {cat.children.length} 个子品类
                     </span>
                   )}
+                  <span className={styles.productCount}>
+                    {productCountMap[cat.id] ?? 0} 个商品
+                  </span>
                 </div>
                 <div className={styles.rowRight}>
                   <span className={styles.catId}>#{idx}</span>
