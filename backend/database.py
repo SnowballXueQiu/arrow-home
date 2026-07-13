@@ -16,4 +16,14 @@ def init_db():
     schema_path = Path(__file__).parent / "schema.sql"
     with open(schema_path, "r") as f:
         conn.executescript(f.read())
+    # migrate existing databases that predate price columns
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(product)")}
+    for col, typedef in [
+        ("price", "REAL DEFAULT NULL"),
+        ("discount_price", "REAL DEFAULT NULL"),
+        ("show_price", "INTEGER DEFAULT 0"),
+    ]:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE product ADD COLUMN {col} {typedef}")
+    conn.commit()
     conn.close()

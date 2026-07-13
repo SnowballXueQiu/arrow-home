@@ -287,6 +287,70 @@
   align-items: center;
 }
 
+/* Price */
+.inputPrefix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.prefix {
+  position: absolute;
+  left: 12px;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  pointer-events: none;
+  font-family: var(--font-mono);
+  z-index: 1;
+}
+
+.inputWithPrefix {
+  padding-left: 26px !important;
+}
+
+/* hide browser number spinners */
+.inputWithPrefix::-webkit-outer-spin-button,
+.inputWithPrefix::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.inputWithPrefix[type=number] {
+  -moz-appearance: textfield;
+}
+
+.pricePreview {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.currentPrice {
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.originalPrice {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.discountPrice {
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--danger);
+}
+
 .submitRow {
   padding: 24px 32px;
   display: flex;

@@ -77,6 +77,11 @@ def seed():
     init_db()
     db = get_db()
 
+    # 管理员账号
+    db.execute(
+        "INSERT OR IGNORE INTO user (id, username, password_hash, nickname, role) VALUES (1, 'admin', 'admin123', '管理员', 'admin')"
+    )
+
     # 品类
     for (cid, name, parent) in TOP:
         db.execute(

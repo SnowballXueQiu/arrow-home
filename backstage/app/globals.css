@@ -1,35 +1,35 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap");
 
 :root {
-  /* Base palette — near-black canvas */
-  --bg: #0a0a0b;
-  --bg-2: #111114;
-  --bg-3: #17171c;
-  --bg-4: #1e1e25;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-hover: rgba(255, 255, 255, 0.14);
+  /* Base palette — clean white canvas */
+  --bg:   #f5f5f7;
+  --bg-2: #ffffff;
+  --bg-3: #f0f0f2;
+  --bg-4: #e8e8ec;
+  --border:       rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.16);
 
   /* Text */
-  --text-primary: #f0f0f2;
-  --text-secondary: #8b8b99;
-  --text-muted: #4a4a58;
+  --text-primary:   #111118;
+  --text-secondary: #5a5a6e;
+  --text-muted:     #9898aa;
 
   /* Accent — warm amber */
-  --accent: #e8a534;
-  --accent-dim: rgba(232, 165, 52, 0.12);
-  --accent-hover: #f0b445;
+  --accent:      #d4860e;
+  --accent-dim:  rgba(212, 134, 14, 0.10);
+  --accent-hover:#e8980f;
 
   /* Semantic */
-  --danger: #ef4444;
-  --danger-dim: rgba(239, 68, 68, 0.1);
-  --success: #22c55e;
-  --success-dim: rgba(34, 197, 94, 0.1);
+  --danger:     #dc2626;
+  --danger-dim: rgba(220, 38, 38, 0.08);
+  --success:    #16a34a;
+  --success-dim:rgba(22, 163, 74, 0.08);
 
   /* Sidebar */
   --sidebar-w: 240px;
 
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius:    7px;
+  --radius-lg: 11px;
 
   --font-sans: "DM Sans", system-ui, sans-serif;
   --font-mono: "DM Mono", monospace;
@@ -57,20 +57,10 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--bg-4);
-  border-radius: 2px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
-}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
 /* Focus ring */
 :focus-visible {
@@ -78,34 +68,24 @@ body {
   outline-offset: 2px;
 }
 
-/* Utility */
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(12px); }
-  to { opacity: 1; transform: translateX(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
 }
 
-.animate-in {
-  animation: fadeIn 0.2s ease both;
-}
+.animate-in { animation: fadeIn 0.2s ease both; }
 
-/* Skeleton loading */
 .skeleton {
   background: linear-gradient(
     90deg,

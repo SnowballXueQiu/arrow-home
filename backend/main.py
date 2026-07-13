@@ -44,6 +44,11 @@ class VariantItem(BaseModel):
     sort_order: int = 0
 
 
+class ImageItem(BaseModel):
+    url: str
+    sort_order: int = 0
+
+
 class ProductCreate(BaseModel):
     name: str
     model: str = ""
@@ -51,8 +56,12 @@ class ProductCreate(BaseModel):
     category_id: int | None = None
     is_hot: bool = False
     sort_order: int = 0
+    price: float | None = None
+    discount_price: float | None = None
+    show_price: bool = False
     attributes: list[AttributeItem] = []
     variants: list[VariantItem] = []
+    images: list[ImageItem] = []
 
 
 class ProductUpdate(BaseModel):
@@ -62,8 +71,12 @@ class ProductUpdate(BaseModel):
     category_id: int | None = None
     is_hot: bool | None = None
     sort_order: int | None = None
+    price: float | None = None
+    discount_price: float | None = None
+    show_price: bool | None = None
     attributes: list[AttributeItem] | None = None
     variants: list[VariantItem] | None = None
+    images: list[ImageItem] | None = None
 
 
 class CategoryCreate(BaseModel):
@@ -264,6 +277,7 @@ def list_products(
     for r in rows:
         item = dict(r)
         item["is_hot"] = bool(item["is_hot"])
+        item["show_price"] = bool(item.get("show_price", 0))
         items.append(item)
 
     db.close()
@@ -326,6 +340,7 @@ def get_product(product_id: int):
 
     product = dict(row)
     product["is_hot"] = bool(product["is_hot"])
+    product["show_price"] = bool(product.get("show_price", 0))
     product = _attach_product_details(db, product)
     db.close()
     return product
@@ -335,8 +350,8 @@ def get_product(product_id: int):
 def create_product(req: ProductCreate):
     db = get_db()
     cursor = db.execute(
-        "INSERT INTO product (name, model, description, category_id, is_hot, sort_order) VALUES (?, ?, ?, ?, ?, ?)",
-        (req.name, req.model, req.description, req.category_id, int(req.is_hot), req.sort_order),
+        "INSERT INTO product (name, model, description, category_id, is_hot, sort_order, price, discount_price, show_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (req.name, req.model, req.description, req.category_id, int(req.is_hot), req.sort_order, req.price, req.discount_price, int(req.show_price)),
     )
     product_id = cursor.lastrowid
 
@@ -350,6 +365,12 @@ def create_product(req: ProductCreate):
         db.execute(
             "INSERT INTO product_variant (product_id, variant_type, variant_value, sort_order) VALUES (?, ?, ?, ?)",
             (product_id, v.variant_type, v.variant_value, v.sort_order),
+        )
+
+    for img in req.images:
+        db.execute(
+            "INSERT INTO product_image (product_id, url, sort_order) VALUES (?, ?, ?)",
+            (product_id, img.url, img.sort_order),
         )
 
     db.commit()
@@ -375,6 +396,14 @@ def update_product(product_id: int, req: ProductUpdate):
     if req.is_hot is not None:
         updates.append("is_hot = ?")
         params.append(int(req.is_hot))
+    # price fields: treat None as "not provided" via model_fields_set
+    for field in ("price", "discount_price"):
+        if field in req.model_fields_set:
+            updates.append(f"{field} = ?")
+            params.append(getattr(req, field))
+    if req.show_price is not None:
+        updates.append("show_price = ?")
+        params.append(int(req.show_price))
 
     if updates:
         params.append(product_id)
@@ -394,6 +423,14 @@ def update_product(product_id: int, req: ProductUpdate):
             db.execute(
                 "INSERT INTO product_variant (product_id, variant_type, variant_value, sort_order) VALUES (?, ?, ?, ?)",
                 (product_id, v.variant_type, v.variant_value, v.sort_order),
+            )
+
+    if req.images is not None:
+        db.execute("DELETE FROM product_image WHERE product_id = ?", (product_id,))
+        for img in req.images:
+            db.execute(
+                "INSERT INTO product_image (product_id, url, sort_order) VALUES (?, ?, ?)",
+                (product_id, img.url, img.sort_order),
             )
 
     db.commit()

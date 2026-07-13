@@ -1,0 +1,184 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Drop zone */
+.zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 36px 24px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-3);
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  user-select: none;
+}
+
+.zone:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.zone.over {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  transform: scale(1.01);
+}
+
+.zone.busy {
+  cursor: default;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.zoneIcon {
+  color: var(--text-muted);
+  transition: color 0.18s;
+}
+
+.zone:hover .zoneIcon,
+.zone.over .zoneIcon {
+  color: var(--accent);
+}
+
+.zoneText {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.zoneSub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Spinner */
+.spinner {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+/* Card */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: var(--radius);
+  overflow: visible;
+}
+
+.thumbWrap {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s;
+}
+
+.thumbWrap:hover .thumb {
+  transform: scale(1.04);
+}
+
+/* Hover overlay with delete button */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+.thumbWrap:hover .overlay {
+  opacity: 1;
+}
+
+.delBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s;
+}
+
+.delBtn:hover {
+  background: rgba(220, 38, 38, 0.7);
+  border-color: transparent;
+}
+
+/* Index badge */
+.idx {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 16px;
+  backdrop-filter: blur(2px);
+}
+
+/* Drag handle below card */
+.handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  color: var(--text-muted);
+  cursor: grab;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.handle:hover {
+  color: var(--accent);
+  background: var(--bg-4);
+}
+
+.handle:active {
+  cursor: grabbing;
+}

@@ -18,10 +18,10 @@
 
 .glow {
   position: fixed;
-  width: 600px;
-  height: 600px;
+  width: 700px;
+  height: 700px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(232, 165, 52, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(212, 134, 14, 0.06) 0%, transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -36,6 +36,7 @@
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
   animation: fadeIn 0.4s ease both;
 }
 

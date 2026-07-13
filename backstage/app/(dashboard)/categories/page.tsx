@@ -61,18 +61,20 @@ export default function CategoriesPage() {
     });
   }
 
-  // Flatten tree for display with depth
+  // Flatten tree for display with depth and human-readable index (#1, #1.1, #2 …)
   function flattenTree(
     nodes: Category[],
-    depth = 0
-  ): { cat: Category; depth: number }[] {
-    const result: { cat: Category; depth: number }[] = [];
-    for (const node of nodes) {
-      result.push({ cat: node, depth });
+    depth = 0,
+    parentIdx = ""
+  ): { cat: Category; depth: number; idx: string }[] {
+    const result: { cat: Category; depth: number; idx: string }[] = [];
+    nodes.forEach((node, i) => {
+      const idx = parentIdx ? `${parentIdx}.${i + 1}` : `${i + 1}`;
+      result.push({ cat: node, depth, idx });
       if (node.children?.length) {
-        result.push(...flattenTree(node.children, depth + 1));
+        result.push(...flattenTree(node.children, depth + 1, idx));
       }
-    }
+    });
     return result;
   }
 
@@ -104,7 +106,7 @@ export default function CategoriesPage() {
           </div>
         ) : (
           <div className={styles.tree}>
-            {flat.map(({ cat, depth }) => (
+            {flat.map(({ cat, depth, idx }) => (
               <div
                 key={cat.id}
                 className={`${styles.row} ${depth === 0 ? styles.topLevel : styles.child}`}
@@ -122,7 +124,7 @@ export default function CategoriesPage() {
                   )}
                 </div>
                 <div className={styles.rowRight}>
-                  <span className={styles.catId}>#{cat.id}</span>
+                  <span className={styles.catId}>#{idx}</span>
                   <button
                     className={styles.deleteBtn}
                     onClick={() => setDeletingId(cat.id)}

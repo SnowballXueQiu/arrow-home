@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS product (
     category_id INTEGER,
     is_hot INTEGER DEFAULT 0,
     sort_order INTEGER DEFAULT 0,
+    price REAL DEFAULT NULL,
+    discount_price REAL DEFAULT NULL,
+    show_price INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES category(id) ON DELETE SET NULL
 );

@@ -14,16 +14,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
         <Toaster
           position="top-right"
           toastOptions={{
             style: {
-              background: "var(--bg-3)",
+              background: "var(--bg-2)",
               border: "1px solid var(--border)",
               color: "var(--text-primary)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
               fontFamily: "var(--font-sans)",
               fontSize: "13px",
             },

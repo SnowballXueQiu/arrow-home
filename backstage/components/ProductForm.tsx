@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCategories } from "@/lib/api";
 import type { Product, ProductAttribute, ProductVariant } from "@/lib/api";
@@ -20,6 +20,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "./Button";
+import { ImageUploader, uid as imgUid } from "./ImageUploader";
+import type { ImageItem } from "./ImageUploader";
 import {
   Plus,
   Trash2,
@@ -153,16 +155,22 @@ export function ProductForm({ initial, onSave, loading }: Props) {
     initial?.category_id ? String(initial.category_id) : ""
   );
   const [isHot, setIsHot] = useState(initial?.is_hot ?? false);
+  const [price, setPrice] = useState<string>(
+    initial?.price != null ? String(initial.price) : ""
+  );
+  const [discountPrice, setDiscountPrice] = useState<string>(
+    initial?.discount_price != null ? String(initial.discount_price) : ""
+  );
+  const [showPrice, setShowPrice] = useState(initial?.show_price ?? false);
   const [attrs, setAttrs] = useState<AttrRow[]>(() =>
     toAttrRows(initial?.attributes)
   );
   const [variants, setVariants] = useState<VariantRow[]>(() =>
     toVariantRows(initial?.variants)
   );
-  const [images, setImages] = useState<string[]>(
-    () => initial?.images?.map((i) => i.url) ?? []
+  const [images, setImages] = useState<ImageItem[]>(
+    () => initial?.images?.map((i) => ({ _id: imgUid(), url: i.url })) ?? []
   );
-  const [newImage, setNewImage] = useState("");
 
   const { data: cats = [] } = useQuery({
     queryKey: ["categories", "flat"],
@@ -238,18 +246,6 @@ export function ProductForm({ initial, onSave, loading }: Props) {
     }
   }
 
-  // --- Images ---
-  function addImage() {
-    const url = newImage.trim();
-    if (!url) return;
-    setImages((prev) => [...prev, url]);
-    setNewImage("");
-  }
-
-  function removeImage(idx: number) {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await onSave({
@@ -258,6 +254,9 @@ export function ProductForm({ initial, onSave, loading }: Props) {
       description: description.trim(),
       category_id: categoryId ? Number(categoryId) : null,
       is_hot: isHot,
+      price: price !== "" ? parseFloat(price) : null,
+      discount_price: discountPrice !== "" ? parseFloat(discountPrice) : null,
+      show_price: showPrice,
       attributes: attrs
         .filter((a) => a.key.trim())
         .map((a, i) => ({ key: a.key.trim(), value: a.value.trim(), sort_order: i })),
@@ -268,7 +267,7 @@ export function ProductForm({ initial, onSave, loading }: Props) {
           variant_value: v.variant_value.trim(),
           sort_order: i,
         })),
-      images: images.map((url, i) => ({ url, sort_order: i })) as any,
+      images: images.map((img, i) => ({ url: img.url, sort_order: i })) as any,
     });
   }
 
@@ -341,6 +340,66 @@ export function ProductForm({ initial, onSave, loading }: Props) {
               <span>{isHot ? "是" : "否"}</span>
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>价格设置</h3>
+        <div className={styles.grid2}>
+          <div className={styles.field}>
+            <label className={styles.label}>原价 (元)</label>
+            <div className={styles.inputPrefix}>
+              <span className={styles.prefix}>¥</span>
+              <input
+                className={`${styles.input} ${styles.inputWithPrefix}`}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="未设置"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>折扣价 (元)</label>
+            <div className={styles.inputPrefix}>
+              <span className={styles.prefix}>¥</span>
+              <input
+                className={`${styles.input} ${styles.inputWithPrefix}`}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="不填则无折扣"
+                value={discountPrice}
+                onChange={(e) => setDiscountPrice(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>价格展示</label>
+          <button
+            type="button"
+            className={`${styles.toggleBtn} ${showPrice ? styles.toggleOn : ""}`}
+            onClick={() => setShowPrice((v) => !v)}
+          >
+            <span className={styles.toggleDot} />
+            <span>{showPrice ? "展示价格" : "不展示价格"}</span>
+          </button>
+          {showPrice && price !== "" && (
+            <div className={styles.pricePreview}>
+              {discountPrice !== "" ? (
+                <>
+                  <span className={styles.originalPrice}>¥{parseFloat(price).toFixed(2)}</span>
+                  <span className={styles.discountPrice}>¥{parseFloat(discountPrice).toFixed(2)}</span>
+                </>
+              ) : (
+                <span className={styles.currentPrice}>¥{parseFloat(price).toFixed(2)}</span>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -435,54 +494,7 @@ export function ProductForm({ initial, onSave, loading }: Props) {
       {/* Images */}
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>产品图片</h3>
-        <div className={styles.imageList}>
-          {images.map((url, i) => (
-            <div key={i} className={styles.imageRow}>
-              <span className={styles.imageIdx}>{i + 1}</span>
-              <input
-                className={styles.input}
-                value={url}
-                onChange={(e) =>
-                  setImages((prev) => {
-                    const next = [...prev];
-                    next[i] = e.target.value;
-                    return next;
-                  })
-                }
-                placeholder="图片 URL"
-              />
-              <button
-                type="button"
-                className={styles.rowDeleteBtn}
-                onClick={() => removeImage(i)}
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className={styles.addImageRow}>
-          <input
-            className={styles.input}
-            value={newImage}
-            onChange={(e) => setNewImage(e.target.value)}
-            placeholder="输入图片 URL 后点击添加"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addImage();
-              }
-            }}
-          />
-          <Button
-            variant="secondary"
-            size="sm"
-            type="button"
-            onClick={addImage}
-          >
-            添加
-          </Button>
-        </div>
+        <ImageUploader value={images} onChange={setImages} />
       </section>
 
       {/* Submit */}

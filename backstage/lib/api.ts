@@ -1,12 +1,17 @@
-import Cookies from "js-cookie";
-
 const BASE = "/backend";
+
+function getToken(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  // Read from cookie directly (no js-cookie needed server-side)
+  const match = document.cookie.match(/(?:^|;\s*)admin_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : undefined;
+}
 
 async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = Cookies.get("admin_token");
+  const token = getToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     headers: {
@@ -65,6 +70,9 @@ export interface Product {
   category_name?: string;
   is_hot: boolean;
   sort_order: number;
+  price: number | null;
+  discount_price: number | null;
+  show_price: boolean;
   created_at: string;
   attributes?: ProductAttribute[];
   variants?: ProductVariant[];

@@ -37,13 +37,15 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: border-color 0.15s, background 0.15s;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
   cursor: pointer;
 }
 
 .statCard:hover {
   border-color: var(--border-hover);
   background: var(--bg-3);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
 .statIcon {

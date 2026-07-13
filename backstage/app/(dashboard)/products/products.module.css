@@ -107,6 +107,7 @@
   text-transform: uppercase;
   letter-spacing: 0.8px;
   border-bottom: 1px solid var(--border);
+  background: var(--bg-3);
   white-space: nowrap;
 }
 
