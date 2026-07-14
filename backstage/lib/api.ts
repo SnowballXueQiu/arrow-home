@@ -155,3 +155,57 @@ export interface Banner {
 export const fetchBanners = () => api.get<Banner[]>("/banners");
 export const deleteBanner = (id: number) =>
   api.delete<{ ok: boolean }>(`/banners/${id}`);
+
+// ---------- Export / Import ----------
+
+export interface ExportData {
+  version: 1;
+  exported_at: string;
+  categories: {
+    id: number;
+    name: string;
+    parent_id: number | null;
+    sort_order: number;
+  }[];
+  products: (Product & {
+    attributes: { key: string; value: string; sort_order: number }[];
+    variants: { variant_type: string; variant_value: string; sort_order: number }[];
+    images: { url: string; sort_order: number }[];
+  })[];
+}
+
+export async function exportAllData(
+  onProgress?: (current: number, total: number) => void
+): Promise<ExportData> {
+  // 1. fetch all categories
+  const categories = await api.get<(Category & { product_count?: number })[]>(
+    "/categories?flat=true"
+  );
+
+  // 2. fetch all products (paginate with large page size)
+  const firstPage = await api.get<ProductListResponse>("/products?page=1&page_size=1000");
+  let allBasic = firstPage.items;
+  const totalPages = Math.ceil(firstPage.total / 1000);
+  for (let p = 2; p <= totalPages; p++) {
+    const r = await api.get<ProductListResponse>(`/products?page=${p}&page_size=1000`);
+    allBasic = allBasic.concat(r.items);
+  }
+
+  // 3. fetch full detail for each product
+  const products: ExportData["products"] = [];
+  for (let i = 0; i < allBasic.length; i++) {
+    onProgress?.(i, allBasic.length);
+    const full = await api.get<Product>(`/products/${allBasic[i].id}`);
+    products.push(full as ExportData["products"][number]);
+  }
+  onProgress?.(allBasic.length, allBasic.length);
+
+  return {
+    version: 1,
+    exported_at: new Date().toISOString(),
+    categories: categories.map(({ id, name, parent_id, sort_order }) => ({
+      id, name, parent_id, sort_order,
+    })),
+    products,
+  };
+}

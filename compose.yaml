@@ -1,0 +1,47 @@
+services:
+  db:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: r00t_arR0w_2025
+      MYSQL_DATABASE: arrow_home
+      MYSQL_USER: arrow
+      MYSQL_PASSWORD: xK9mQ3pL7wN2vB5j
+    ports:
+      - "33061:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "arrow", "-pxK9mQ3pL7wN2vB5j"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql+pymysql://arrow:xK9mQ3pL7wN2vB5j@db:3306/arrow_home
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backstage:
+    build:
+      context: .
+      dockerfile: backstage/Dockerfile
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

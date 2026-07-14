@@ -1,9 +1,15 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_mcp import FastApiMCP
 from pydantic import BaseModel
-from database import get_db, init_db
+from sqlalchemy.orm import Session
+from sqlalchemy import text, or_, func
+from database import (
+    get_db, init_db,
+    User, Category, Product, ProductAttribute, ProductVariant, ProductImage,
+    Banner, Announcement,
+)
 
 
 @asynccontextmanager
@@ -23,8 +29,7 @@ app.add_middleware(
 )
 
 
-# --- Models ---
-
+# --- Pydantic models ---
 
 class LoginRequest(BaseModel):
     code: str = ""
@@ -97,170 +102,191 @@ class AnnouncementCreate(BaseModel):
     content: str
 
 
-# --- Auth ---
+# --- Serializers ---
 
+def _ser_product_base(p: Product) -> dict:
+    return {
+        "id": p.id,
+        "name": p.name or "",
+        "model": p.model or "",
+        "description": p.description or "",
+        "category_id": p.category_id,
+        "category_name": p.category.name if p.category else None,
+        "is_hot": bool(p.is_hot),
+        "sort_order": p.sort_order,
+        "price": p.price,
+        "discount_price": p.discount_price,
+        "show_price": bool(p.show_price),
+        "created_at": str(p.created_at) if p.created_at else None,
+    }
+
+
+def _ser_product_full(p: Product) -> dict:
+    d = _ser_product_base(p)
+    d["attributes"] = [{"key": a.key, "value": a.value, "sort_order": a.sort_order} for a in p.attributes]
+    d["variants"] = [{"variant_type": v.variant_type, "variant_value": v.variant_value, "sort_order": v.sort_order} for v in p.variants]
+    d["images"] = [{"url": i.url, "sort_order": i.sort_order} for i in p.images]
+    return d
+
+
+def _ser_category(c: Category, children=None) -> dict:
+    d = {
+        "id": c.id,
+        "name": c.name,
+        "parent_id": c.parent_id,
+        "sort_order": c.sort_order,
+        "created_at": str(c.created_at) if c.created_at else None,
+    }
+    if children is not None:
+        d["children"] = children
+    return d
+
+
+# --- Auth ---
 
 @app.post("/auth/login")
 def login(req: LoginRequest):
     db = get_db()
-    if req.username and req.password:
-        row = db.execute(
-            "SELECT * FROM user WHERE username = ?", (req.username,)
-        ).fetchone()
+    try:
+        if req.username and req.password:
+            user = db.query(User).filter_by(username=req.username).first()
+            if not user or user.password_hash != req.password:
+                raise HTTPException(400, "用户名或密码错误")
+            return {
+                "token": f"token_{user.id}",
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "nickname": user.nickname,
+                    "phone": user.phone,
+                    "role": user.role,
+                },
+            }
+        return {"token": "token_wechat", "user": {"id": 0, "nickname": "微信用户", "role": "dealer"}}
+    finally:
         db.close()
-        if not row or row["password_hash"] != req.password:
-            raise HTTPException(400, "用户名或密码错误")
-        return {
-            "token": f"token_{row['id']}",
-            "user": {
-                "id": row["id"],
-                "username": row["username"],
-                "nickname": row["nickname"],
-                "phone": row["phone"],
-                "role": row["role"],
-            },
-        }
-    db.close()
-    return {"token": "token_wechat", "user": {"id": 0, "nickname": "微信用户", "role": "dealer"}}
 
 
 @app.get("/user/profile")
 def get_profile():
     db = get_db()
-    row = db.execute("SELECT * FROM user WHERE id = 1").fetchone()
-    db.close()
-    if not row:
-        raise HTTPException(404, "用户不存在")
-    return {
-        "id": row["id"],
-        "username": row["username"],
-        "nickname": row["nickname"],
-        "phone": row["phone"],
-        "role": row["role"],
-    }
+    try:
+        user = db.query(User).filter_by(id=1).first()
+        if not user:
+            raise HTTPException(404, "用户不存在")
+        return {"id": user.id, "username": user.username, "nickname": user.nickname, "phone": user.phone, "role": user.role}
+    finally:
+        db.close()
 
 
 # --- Categories ---
 
-
 @app.get("/categories")
 def list_categories(parent_id: int | None = None, flat: bool = False):
-    """
-    默认返回完整树形结构。
-    ?flat=true  返回扁平列表（含 parent_id 字段）。
-    ?parent_id=N  返回指定父级的直接子品类（隐含 flat=true）。
-    """
     db = get_db()
+    try:
+        if parent_id is not None:
+            cats = db.query(Category).filter_by(parent_id=parent_id).order_by(Category.sort_order).all()
+            return [_ser_category(c) for c in cats]
 
-    if parent_id is not None:
-        rows = db.execute(
-            "SELECT * FROM category WHERE parent_id = ? ORDER BY sort_order",
-            (parent_id,),
-        ).fetchall()
+        if flat:
+            # Parent-aware ordering: group children under their root, sorted by root sort_order
+            rows = db.execute(text("""
+                SELECT c.id, c.name, c.parent_id, c.sort_order, c.created_at
+                FROM category c
+                LEFT JOIN category p ON c.parent_id = p.id
+                ORDER BY
+                  COALESCE(p.sort_order, c.sort_order),
+                  c.parent_id IS NOT NULL,
+                  c.sort_order
+            """)).mappings().all()
+            # product counts
+            counts = dict(db.query(Product.category_id, func.count(Product.id))
+                          .filter(Product.category_id.isnot(None))
+                          .group_by(Product.category_id).all())
+            result = []
+            for r in rows:
+                result.append({
+                    "id": r["id"],
+                    "name": r["name"],
+                    "parent_id": r["parent_id"],
+                    "sort_order": r["sort_order"],
+                    "created_at": str(r["created_at"]) if r["created_at"] else None,
+                    "product_count": counts.get(r["id"], 0),
+                })
+            return result
+
+        # tree
+        all_cats = db.query(Category).order_by(Category.sort_order).all()
+        by_id: dict[int, dict] = {c.id: _ser_category(c, children=[]) for c in all_cats}
+        roots = []
+        for c in all_cats:
+            node = by_id[c.id]
+            if c.parent_id and c.parent_id in by_id:
+                by_id[c.parent_id]["children"].append(node)
+            else:
+                roots.append(node)
+        return roots
+    finally:
         db.close()
-        return [dict(r) for r in rows]
-
-    if flat:
-        rows = db.execute(
-            """
-            SELECT c.*
-            FROM category c
-            LEFT JOIN category p ON c.parent_id = p.id
-            ORDER BY
-              COALESCE(p.sort_order, c.sort_order),
-              c.parent_id IS NOT NULL,
-              c.sort_order
-            """
-        ).fetchall()
-        items = [dict(r) for r in rows]
-        counts = db.execute(
-            "SELECT category_id, COUNT(*) as cnt FROM product GROUP BY category_id"
-        ).fetchall()
-        count_map = {r["category_id"]: r["cnt"] for r in counts}
-        db.close()
-        for item in items:
-            item["product_count"] = count_map.get(item["id"], 0)
-        return items
-
-    rows = db.execute("SELECT * FROM category ORDER BY sort_order").fetchall()
-    items = [dict(r) for r in rows]
-    db.close()
-
-    # 构建树
-    by_id = {item["id"]: {**item, "children": []} for item in items}
-    roots = []
-    for item in by_id.values():
-        pid = item["parent_id"]
-        if pid and pid in by_id:
-            by_id[pid]["children"].append(item)
-        else:
-            roots.append(item)
-    return roots
 
 
 @app.post("/categories")
 def create_category(req: CategoryCreate):
     db = get_db()
-    cursor = db.execute(
-        "INSERT INTO category (name, parent_id, sort_order) VALUES (?, ?, ?)",
-        (req.name, req.parent_id, req.sort_order),
-    )
-    db.commit()
-    cat_id = cursor.lastrowid
-    db.close()
-    return {"id": cat_id, "name": req.name}
+    try:
+        cat = Category(name=req.name, parent_id=req.parent_id, sort_order=req.sort_order)
+        db.add(cat)
+        db.commit()
+        db.refresh(cat)
+        return {"id": cat.id, "name": cat.name}
+    finally:
+        db.close()
 
 
 @app.delete("/categories/{cat_id}")
 def delete_category(cat_id: int):
     db = get_db()
-    db.execute("DELETE FROM category WHERE id = ?", (cat_id,))
-    db.commit()
-    db.close()
-    return {"ok": True}
+    try:
+        cat = db.query(Category).filter_by(id=cat_id).first()
+        if cat:
+            db.delete(cat)
+            db.commit()
+        return {"ok": True}
+    finally:
+        db.close()
 
 
 @app.get("/categories/{cat_id}/products")
 def list_category_products(cat_id: int):
     db = get_db()
-    rows = db.execute(
-        "SELECT id, model, name, is_hot FROM product WHERE category_id = ? ORDER BY sort_order, id",
-        (cat_id,),
-    ).fetchall()
-    db.close()
-    return [dict(r) for r in rows]
+    try:
+        products = (db.query(Product)
+                    .filter_by(category_id=cat_id)
+                    .order_by(Product.sort_order, Product.id).all())
+        return [{"id": p.id, "model": p.model, "name": p.name, "is_hot": bool(p.is_hot)} for p in products]
+    finally:
+        db.close()
 
 
 # --- Products ---
 
-
-def _attach_product_details(db, product: dict) -> dict:
-    pid = product["id"]
-    attrs = db.execute(
-        "SELECT key, value, sort_order FROM product_attribute WHERE product_id = ? ORDER BY sort_order",
-        (pid,),
-    ).fetchall()
-    product["attributes"] = [dict(a) for a in attrs]
-
-    variants = db.execute(
-        "SELECT variant_type, variant_value, sort_order FROM product_variant WHERE product_id = ? ORDER BY sort_order",
-        (pid,),
-    ).fetchall()
-    product["variants"] = [dict(v) for v in variants]
-
-    images = db.execute(
-        "SELECT url, sort_order FROM product_image WHERE product_id = ? ORDER BY sort_order",
-        (pid,),
-    ).fetchall()
-    product["images"] = [dict(i) for i in images]
-
-    return product
+def _collect_category_ids(db: Session, root_id: int) -> list[int]:
+    result = [root_id]
+    queue = [root_id]
+    while queue:
+        current = queue.pop(0)
+        children = db.query(Category.id).filter_by(parent_id=current).all()
+        for (cid,) in children:
+            result.append(cid)
+            queue.append(cid)
+    return result
 
 
 @app.get("/products")
 def list_products(
     page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page_size: int = Query(10, ge=1, le=1000),
     category_id: int | None = None,
     keyword: str | None = None,
     include_subcategories: bool = False,
@@ -268,127 +294,71 @@ def list_products(
     sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
 ):
     db = get_db()
-    conditions = []
-    params: list = []
+    try:
+        q = db.query(Product)
 
-    if category_id:
-        if include_subcategories:
-            # 收集该品类及所有后代 id
-            all_ids = _collect_category_ids(db, category_id)
-            placeholders = ",".join("?" * len(all_ids))
-            conditions.append(f"p.category_id IN ({placeholders})")
-            params.extend(all_ids)
+        if category_id:
+            if include_subcategories:
+                ids = _collect_category_ids(db, category_id)
+                q = q.filter(Product.category_id.in_(ids))
+            else:
+                q = q.filter(Product.category_id == category_id)
+
+        if keyword:
+            q = q.filter(or_(Product.name.ilike(f"%{keyword}%"), Product.model.ilike(f"%{keyword}%")))
+
+        total = q.count()
+        offset = (page - 1) * page_size
+
+        # ordering
+        from sqlalchemy import asc, desc
+        dir_fn = desc if sort_dir == "desc" else asc
+        if sort_by == "model":
+            q = q.order_by(dir_fn(Product.model))
+        elif sort_by == "category":
+            q = q.join(Category, Product.category_id == Category.id, isouter=True).order_by(dir_fn(Category.name), asc(Product.model))
+        elif sort_by == "id":
+            q = q.order_by(dir_fn(Product.id))
         else:
-            conditions.append("p.category_id = ?")
-            params.append(category_id)
+            q = q.order_by(asc(Product.sort_order), asc(Product.id))
 
-    if keyword:
-        conditions.append("(p.name LIKE ? OR p.model LIKE ?)")
-        params.extend([f"%{keyword}%", f"%{keyword}%"])
+        products = q.offset(offset).limit(page_size).all()
 
-    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
-    offset = (page - 1) * page_size
+        items = []
+        for p in products:
+            d = _ser_product_base(p)
+            cover = p.images[0] if p.images else None
+            d["images"] = [{"url": cover.url, "sort_order": 0}] if cover else []
+            items.append(d)
 
-    total = db.execute(
-        f"SELECT COUNT(*) FROM product p {where}", params
-    ).fetchone()[0]
-
-    dir_sql = "DESC" if sort_dir == "desc" else "ASC"
-    order_sql = {
-        "model": f"p.model {dir_sql}",
-        "category": f"c.name {dir_sql}, p.model ASC",
-        "id": f"p.id {dir_sql}",
-    }.get(sort_by, f"p.sort_order ASC, p.id ASC")
-
-    rows = db.execute(
-        f"""
-        SELECT p.*, c.name as category_name
-        FROM product p
-        LEFT JOIN category c ON p.category_id = c.id
-        {where}
-        ORDER BY {order_sql}
-        LIMIT ? OFFSET ?
-        """,
-        params + [page_size, offset],
-    ).fetchall()
-
-    items = []
-    for r in rows:
-        item = dict(r)
-        item["is_hot"] = bool(item["is_hot"])
-        item["show_price"] = bool(item.get("show_price", 0))
-        # attach first image for list cover
-        cover = db.execute(
-            "SELECT url FROM product_image WHERE product_id = ? ORDER BY sort_order LIMIT 1",
-            (item["id"],),
-        ).fetchone()
-        item["images"] = [{"url": cover["url"], "sort_order": 0}] if cover else []
-        items.append(item)
-
-    db.close()
-    return {"items": items, "page": page, "page_size": page_size, "total": total}
-
-
-def _collect_category_ids(db, root_id: int) -> list[int]:
-    """BFS 收集 root_id 及其所有后代品类 id。"""
-    result = [root_id]
-    queue = [root_id]
-    while queue:
-        current = queue.pop(0)
-        children = db.execute(
-            "SELECT id FROM category WHERE parent_id = ?", (current,)
-        ).fetchall()
-        for c in children:
-            result.append(c["id"])
-            queue.append(c["id"])
-    return result
+        return {"items": items, "page": page, "page_size": page_size, "total": total}
+    finally:
+        db.close()
 
 
 @app.get("/products/hot")
 def list_hot_products():
     db = get_db()
-    rows = db.execute(
-        """
-        SELECT p.*, c.name as category_name
-        FROM product p
-        LEFT JOIN category c ON p.category_id = c.id
-        WHERE p.is_hot = 1
-        ORDER BY p.sort_order
-        LIMIT 8
-        """
-    ).fetchall()
-    db.close()
-    items = []
-    for r in rows:
-        item = dict(r)
-        item["is_hot"] = True
-        items.append(item)
-    return items
+    try:
+        products = (db.query(Product)
+                    .filter_by(is_hot=True)
+                    .order_by(Product.sort_order)
+                    .limit(8).all())
+        return [_ser_product_base(p) for p in products]
+    finally:
+        db.close()
 
 
 @app.get("/products/{product_id}")
 def get_product(product_id: int):
     db = get_db()
-    row = db.execute(
-        """
-        SELECT p.*, c.name as category_name
-        FROM product p
-        LEFT JOIN category c ON p.category_id = c.id
-        WHERE p.id = ?
-        """,
-        (product_id,),
-    ).fetchone()
-
-    if not row:
+    try:
+        p = db.query(Product).filter_by(id=product_id).first()
+        if not p:
+            raise HTTPException(404, "产品不存在")
+        return _ser_product_full(p)
+    finally:
         db.close()
-        raise HTTPException(404, "产品不存在")
-
-    product = dict(row)
-    product["is_hot"] = bool(product["is_hot"])
-    product["show_price"] = bool(product.get("show_price", 0))
-    product = _attach_product_details(db, product)
-    db.close()
-    return product
 
 
 @app.post("/products")
@@ -396,33 +366,25 @@ def create_product(req: ProductCreate):
     if not req.model.strip():
         raise HTTPException(400, "型号不能为空")
     db = get_db()
-    cursor = db.execute(
-        "INSERT INTO product (name, model, description, category_id, is_hot, sort_order, price, discount_price, show_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (req.name, req.model, req.description, req.category_id, int(req.is_hot), req.sort_order, req.price, req.discount_price, int(req.show_price)),
-    )
-    product_id = cursor.lastrowid
-
-    for attr in req.attributes:
-        db.execute(
-            "INSERT INTO product_attribute (product_id, key, value, sort_order) VALUES (?, ?, ?, ?)",
-            (product_id, attr.key, attr.value, attr.sort_order),
+    try:
+        p = Product(
+            name=req.name, model=req.model, description=req.description,
+            category_id=req.category_id, is_hot=req.is_hot,
+            sort_order=req.sort_order, price=req.price,
+            discount_price=req.discount_price, show_price=req.show_price,
         )
-
-    for v in req.variants:
-        db.execute(
-            "INSERT INTO product_variant (product_id, variant_type, variant_value, sort_order) VALUES (?, ?, ?, ?)",
-            (product_id, v.variant_type, v.variant_value, v.sort_order),
-        )
-
-    for img in req.images:
-        db.execute(
-            "INSERT INTO product_image (product_id, url, sort_order) VALUES (?, ?, ?)",
-            (product_id, img.url, img.sort_order),
-        )
-
-    db.commit()
-    db.close()
-    return {"id": product_id}
+        db.add(p)
+        db.flush()
+        for a in req.attributes:
+            db.add(ProductAttribute(product_id=p.id, key=a.key, value=a.value, sort_order=a.sort_order))
+        for v in req.variants:
+            db.add(ProductVariant(product_id=p.id, variant_type=v.variant_type, variant_value=v.variant_value, sort_order=v.sort_order))
+        for img in req.images:
+            db.add(ProductImage(product_id=p.id, url=img.url, sort_order=img.sort_order))
+        db.commit()
+        return {"id": p.id}
+    finally:
+        db.close()
 
 
 @app.put("/products/{product_id}")
@@ -430,137 +392,138 @@ def update_product(product_id: int, req: ProductUpdate):
     if req.model is not None and not req.model.strip():
         raise HTTPException(400, "型号不能为空")
     db = get_db()
-    row = db.execute("SELECT id FROM product WHERE id = ?", (product_id,)).fetchone()
-    if not row:
+    try:
+        p = db.query(Product).filter_by(id=product_id).first()
+        if not p:
+            raise HTTPException(404, "产品不存在")
+
+        for field in ("name", "model", "description", "category_id", "sort_order"):
+            val = getattr(req, field)
+            if val is not None:
+                setattr(p, field, val)
+        if req.is_hot is not None:
+            p.is_hot = req.is_hot
+        if req.show_price is not None:
+            p.show_price = req.show_price
+        for field in ("price", "discount_price"):
+            if field in req.model_fields_set:
+                setattr(p, field, getattr(req, field))
+
+        if req.attributes is not None:
+            for a in list(p.attributes):
+                db.delete(a)
+            for a in req.attributes:
+                db.add(ProductAttribute(product_id=p.id, key=a.key, value=a.value, sort_order=a.sort_order))
+
+        if req.variants is not None:
+            for v in list(p.variants):
+                db.delete(v)
+            for v in req.variants:
+                db.add(ProductVariant(product_id=p.id, variant_type=v.variant_type, variant_value=v.variant_value, sort_order=v.sort_order))
+
+        if req.images is not None:
+            for i in list(p.images):
+                db.delete(i)
+            for img in req.images:
+                db.add(ProductImage(product_id=p.id, url=img.url, sort_order=img.sort_order))
+
+        db.commit()
+        return {"ok": True}
+    finally:
         db.close()
-        raise HTTPException(404, "产品不存在")
-
-    updates = []
-    params: list = []
-    for field in ("name", "model", "description", "category_id", "sort_order"):
-        val = getattr(req, field)
-        if val is not None:
-            updates.append(f"{field} = ?")
-            params.append(val)
-    if req.is_hot is not None:
-        updates.append("is_hot = ?")
-        params.append(int(req.is_hot))
-    # price fields: treat None as "not provided" via model_fields_set
-    for field in ("price", "discount_price"):
-        if field in req.model_fields_set:
-            updates.append(f"{field} = ?")
-            params.append(getattr(req, field))
-    if req.show_price is not None:
-        updates.append("show_price = ?")
-        params.append(int(req.show_price))
-
-    if updates:
-        params.append(product_id)
-        db.execute(f"UPDATE product SET {', '.join(updates)} WHERE id = ?", params)
-
-    if req.attributes is not None:
-        db.execute("DELETE FROM product_attribute WHERE product_id = ?", (product_id,))
-        for attr in req.attributes:
-            db.execute(
-                "INSERT INTO product_attribute (product_id, key, value, sort_order) VALUES (?, ?, ?, ?)",
-                (product_id, attr.key, attr.value, attr.sort_order),
-            )
-
-    if req.variants is not None:
-        db.execute("DELETE FROM product_variant WHERE product_id = ?", (product_id,))
-        for v in req.variants:
-            db.execute(
-                "INSERT INTO product_variant (product_id, variant_type, variant_value, sort_order) VALUES (?, ?, ?, ?)",
-                (product_id, v.variant_type, v.variant_value, v.sort_order),
-            )
-
-    if req.images is not None:
-        db.execute("DELETE FROM product_image WHERE product_id = ?", (product_id,))
-        for img in req.images:
-            db.execute(
-                "INSERT INTO product_image (product_id, url, sort_order) VALUES (?, ?, ?)",
-                (product_id, img.url, img.sort_order),
-            )
-
-    db.commit()
-    db.close()
-    return {"ok": True}
 
 
 @app.delete("/products/{product_id}")
 def delete_product(product_id: int):
     db = get_db()
-    db.execute("DELETE FROM product WHERE id = ?", (product_id,))
-    db.commit()
-    db.close()
-    return {"ok": True}
+    try:
+        p = db.query(Product).filter_by(id=product_id).first()
+        if p:
+            db.delete(p)
+            db.commit()
+        return {"ok": True}
+    finally:
+        db.close()
 
 
 # --- Banners ---
 
-
 @app.get("/banners")
 def list_banners():
     db = get_db()
-    rows = db.execute(
-        "SELECT * FROM banner WHERE is_active = 1 ORDER BY sort_order"
-    ).fetchall()
-    db.close()
-    return [dict(r) for r in rows]
+    try:
+        banners = db.query(Banner).filter_by(is_active=True).order_by(Banner.sort_order).all()
+        return [{"id": b.id, "title": b.title, "subtitle": b.subtitle, "tag": b.tag,
+                 "image_url": b.image_url, "link_product_id": b.link_product_id,
+                 "sort_order": b.sort_order, "is_active": b.is_active} for b in banners]
+    finally:
+        db.close()
 
 
 @app.post("/banners")
 def create_banner(req: BannerCreate):
     db = get_db()
-    cursor = db.execute(
-        "INSERT INTO banner (title, subtitle, tag, link_product_id, sort_order) VALUES (?, ?, ?, ?, ?)",
-        (req.title, req.subtitle, req.tag, req.link_product_id, req.sort_order),
-    )
-    db.commit()
-    banner_id = cursor.lastrowid
-    db.close()
-    return {"id": banner_id}
+    try:
+        b = Banner(title=req.title, subtitle=req.subtitle, tag=req.tag,
+                   link_product_id=req.link_product_id, sort_order=req.sort_order)
+        db.add(b)
+        db.commit()
+        db.refresh(b)
+        return {"id": b.id}
+    finally:
+        db.close()
 
 
 @app.delete("/banners/{banner_id}")
 def delete_banner(banner_id: int):
     db = get_db()
-    db.execute("DELETE FROM banner WHERE id = ?", (banner_id,))
-    db.commit()
-    db.close()
-    return {"ok": True}
+    try:
+        b = db.query(Banner).filter_by(id=banner_id).first()
+        if b:
+            db.delete(b)
+            db.commit()
+        return {"ok": True}
+    finally:
+        db.close()
 
 
 # --- Announcements ---
 
-
 @app.get("/announcements")
 def list_announcements():
     db = get_db()
-    rows = db.execute(
-        "SELECT * FROM announcement WHERE is_active = 1 ORDER BY id DESC"
-    ).fetchall()
-    db.close()
-    return [dict(r) for r in rows]
+    try:
+        anns = db.query(Announcement).filter_by(is_active=True).order_by(Announcement.id.desc()).all()
+        return [{"id": a.id, "content": a.content, "is_active": a.is_active,
+                 "created_at": str(a.created_at) if a.created_at else None} for a in anns]
+    finally:
+        db.close()
 
 
 @app.post("/announcements")
 def create_announcement(req: AnnouncementCreate):
     db = get_db()
-    cursor = db.execute("INSERT INTO announcement (content) VALUES (?)", (req.content,))
-    db.commit()
-    ann_id = cursor.lastrowid
-    db.close()
-    return {"id": ann_id}
+    try:
+        a = Announcement(content=req.content)
+        db.add(a)
+        db.commit()
+        db.refresh(a)
+        return {"id": a.id}
+    finally:
+        db.close()
 
 
 @app.delete("/announcements/{ann_id}")
 def delete_announcement(ann_id: int):
     db = get_db()
-    db.execute("DELETE FROM announcement WHERE id = ?", (ann_id,))
-    db.commit()
-    db.close()
-    return {"ok": True}
+    try:
+        a = db.query(Announcement).filter_by(id=ann_id).first()
+        if a:
+            db.delete(a)
+            db.commit()
+        return {"ok": True}
+    finally:
+        db.close()
 
 
 mcp = FastApiMCP(app)
@@ -568,5 +531,4 @@ mcp.mount_http()
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
