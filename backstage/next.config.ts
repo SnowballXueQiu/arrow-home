@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 // Node.js 22 exposes a broken localStorage global (no storage path set).
 // Patch it out before Next.js loads any modules so that packages like
@@ -17,6 +18,10 @@ if (typeof globalThis.localStorage !== "undefined") {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // When building inside a pnpm monorepo, the real node_modules live at the
+  // workspace root (one level up). This tells Next.js to trace files from
+  // there so symlinks resolve correctly in the standalone bundle.
+  outputFileTracingRoot: path.join(__dirname, "../"),
   async rewrites() {
     return [
       {
