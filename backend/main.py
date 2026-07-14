@@ -5,6 +5,7 @@ from fastapi_mcp import FastApiMCP
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import text, or_, func
+import bcrypt
 from database import (
     get_db, init_db,
     User, Category, Product, ProductAttribute, ProductVariant, ProductImage,
@@ -150,7 +151,7 @@ def login(req: LoginRequest):
     try:
         if req.username and req.password:
             user = db.query(User).filter_by(username=req.username).first()
-            if not user or user.password_hash != req.password:
+            if not user or not bcrypt.checkpw(req.password.encode(), user.password_hash.encode()):
                 raise HTTPException(400, "用户名或密码错误")
             return {
                 "token": f"token_{user.id}",

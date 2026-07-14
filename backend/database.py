@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from sqlalchemy import (
     create_engine, Column, Integer, String, Float, Boolean,
     ForeignKey, DateTime, Text, func
@@ -127,11 +129,22 @@ def get_db() -> Session:
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-    # seed admin user if missing
+    import bcrypt
+    admin_username = os.getenv("ADMIN_USERNAME", "admin")
+    admin_hash = os.getenv(
+        "ADMIN_PASSWORD_HASH",
+        bcrypt.hashpw(b"admin123", bcrypt.gensalt()).decode(),
+    )
     db = SessionLocal()
     try:
-        if not db.query(User).filter_by(username="admin").first():
-            db.add(User(id=1, username="admin", password_hash="admin123", nickname="管理员", role="admin"))
+        existing = db.query(User).filter_by(username=admin_username).first()
+        if not existing:
+            db.add(User(id=1, username=admin_username, password_hash=admin_hash, nickname="管理员", role="admin"))
+            db.commit()
+        elif existing.password_hash != admin_hash:
+            # Update hash if env changed
+            existing.password_hash = admin_hash
+            existing.username = admin_username
             db.commit()
     finally:
         db.close()

@@ -81,7 +81,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className={styles.hint}>默认账号 admin / admin123</p>
       </div>
     </div>
   );
