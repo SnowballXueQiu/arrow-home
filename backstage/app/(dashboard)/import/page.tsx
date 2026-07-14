@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchCategories, createProduct, createCategory, exportAllData } from "@/lib/api";
+import { fetchCategories, createProduct, createCategory, bulkImportProducts, exportAllData } from "@/lib/api";
 import type { Category, ExportData } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/Button";
@@ -156,35 +156,32 @@ export default function ImportPage() {
         }
       }
 
-      // 2. Import products
+      // 2. Import products via bulk endpoint (skips duplicates by model)
       setBackupProgress({ current: 0, total: backupData.products.length, step: "导入产品" });
-
-      for (let i = 0; i < backupData.products.length; i++) {
-        const p = backupData.products[i];
-        setBackupProgress({ current: i + 1, total: backupData.products.length, step: "导入产品" });
-        const newCatId = p.category_id != null ? (catIdMap[p.category_id] ?? null) : null;
-        await createProduct({
-          model: p.model,
-          name: p.name || "",
-          description: p.description || "",
-          category_id: newCatId,
-          is_hot: p.is_hot,
-          sort_order: p.sort_order,
-          price: p.price ?? undefined,
-          discount_price: p.discount_price ?? undefined,
-          show_price: p.show_price,
-          attributes: p.attributes ?? [],
-          variants: p.variants ?? [],
-          images: p.images ?? [],
-        });
-        productsImported++;
-      }
+      const productPayload = backupData.products.map((p) => ({
+        model: p.model,
+        name: p.name || "",
+        description: p.description || "",
+        category_id: p.category_id != null ? (catIdMap[p.category_id] ?? null) : null,
+        is_hot: p.is_hot,
+        sort_order: p.sort_order,
+        price: p.price ?? undefined,
+        discount_price: p.discount_price ?? undefined,
+        show_price: p.show_price,
+        attributes: p.attributes ?? [],
+        variants: p.variants ?? [],
+        images: p.images ?? [],
+      }));
+      setBackupProgress({ current: productPayload.length, total: productPayload.length, step: "导入产品" });
+      const bulkResult = await bulkImportProducts(productPayload);
+      productsImported = bulkResult.imported;
 
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
+      const skippedMsg = bulkResult.skipped > 0 ? `，跳过重复 ${bulkResult.skipped} 个` : "";
       setBackupResult({ cats: catsImported, products: productsImported });
       setBackupStatus("done");
-      toast.success(`备份恢复完成：${catsImported} 品类，${productsImported} 产品`);
+      toast.success(`备份恢复完成：${catsImported} 品类，${productsImported} 产品${skippedMsg}`);
     } catch (e) {
       toast.error("导入失败：" + (e instanceof Error ? e.message : "未知错误"));
       setBackupStatus("preview");
@@ -257,50 +254,54 @@ export default function ImportPage() {
 
   async function handleImport() {
     setStatus("importing");
-    let success = 0, failed = 0;
-    const errors: string[] = [];
     const fieldToCol: Partial<Record<FieldKey, string>> = {};
     for (const [col, field] of Object.entries(mapping)) {
       if (field) fieldToCol[field] = col;
     }
 
+    const payload = [];
+    const rowErrors: string[] = [];
+    const mappedCols = new Set(Object.values(fieldToCol));
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const model = fieldToCol.model ? row[fieldToCol.model]?.trim() : "";
       if (!model) {
-        failed++;
-        errors.push(`第 ${i + 2} 行：缺少型号，已跳过`);
+        rowErrors.push(`第 ${i + 2} 行：缺少型号，已跳过`);
         continue;
       }
       const catName = fieldToCol.category_name ? row[fieldToCol.category_name]?.trim() : "";
       const catId = catName ? catByName[catName] ?? null : null;
-      const mappedCols = new Set(Object.values(fieldToCol));
       const attributes = [];
       for (const col of columns) {
         if (!mappedCols.has(col) && row[col]?.trim()) {
           attributes.push({ key: col, value: row[col].trim(), sort_order: attributes.length });
         }
       }
-      try {
-        await createProduct({
-          model,
-          name: fieldToCol.name ? row[fieldToCol.name]?.trim() ?? "" : "",
-          description: fieldToCol.description ? row[fieldToCol.description]?.trim() ?? "" : "",
-          category_id: catId,
-          is_hot: fieldToCol.is_hot ? row[fieldToCol.is_hot]?.trim() === "1" : false,
-          attributes,
-        });
-        success++;
-      } catch (e: unknown) {
-        failed++;
-        errors.push(`第 ${i + 2} 行 [${model}]：${e instanceof Error ? e.message : "未知错误"}`);
-      }
+      payload.push({
+        model,
+        name: fieldToCol.name ? row[fieldToCol.name]?.trim() ?? "" : "",
+        description: fieldToCol.description ? row[fieldToCol.description]?.trim() ?? "" : "",
+        category_id: catId,
+        is_hot: fieldToCol.is_hot ? row[fieldToCol.is_hot]?.trim() === "1" : false,
+        attributes,
+      });
     }
 
-    qc.invalidateQueries({ queryKey: ["products"] });
-    setResults({ success, failed, errors });
-    setStatus("done");
-    if (success > 0) toast.success(`成功导入 ${success} 个产品`);
+    try {
+      const result = await bulkImportProducts(payload);
+      qc.invalidateQueries({ queryKey: ["products"] });
+      const allErrors = [...rowErrors, ...result.errors];
+      setResults({ success: result.imported, failed: rowErrors.length + result.errors.length, errors: allErrors });
+      setStatus("done");
+      const skippedMsg = result.skipped > 0 ? `，跳过重复 ${result.skipped} 个` : "";
+      if (result.imported > 0) toast.success(`成功导入 ${result.imported} 个产品${skippedMsg}`);
+      else toast.info(`无新产品导入${skippedMsg}`);
+    } catch (e: unknown) {
+      setResults({ success: 0, failed: rows.length, errors: [e instanceof Error ? e.message : "未知错误"] });
+      setStatus("done");
+      toast.error("导入失败");
+    }
   }
 
   function reset() {

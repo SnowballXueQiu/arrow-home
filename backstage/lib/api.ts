@@ -140,6 +140,9 @@ export const updateProduct = (id: number, data: Partial<Product>) =>
 export const deleteProduct = (id: number) =>
   api.delete<{ ok: boolean }>(`/products/${id}`);
 
+export const bulkImportProducts = (items: Partial<Product>[]) =>
+  api.post<{ imported: number; skipped: number; errors: string[] }>("/products/import", items);
+
 // ---------- Banners / Announcements ----------
 
 export interface Banner {

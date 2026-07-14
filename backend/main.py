@@ -439,10 +439,72 @@ def delete_product(product_id: int):
     db = get_db()
     try:
         p = db.query(Product).filter_by(id=product_id).first()
-        if p:
-            db.delete(p)
-            db.commit()
+        if not p:
+            return {"ok": True}
+        db.delete(p)
+        db.flush()
+        # Shift all higher IDs down by 1 to keep sequence contiguous
+        db.execute(text("UPDATE product SET id = id - 1 WHERE id > :pid"), {"pid": product_id})
+        db.execute(text("ALTER TABLE product AUTO_INCREMENT = :ai"), {
+            "ai": max(1, (db.execute(text("SELECT MAX(id) FROM product")).scalar() or 0) + 1)
+        })
+        db.commit()
         return {"ok": True}
+    finally:
+        db.close()
+
+
+class BulkImportItem(BaseModel):
+    model: str
+    name: str = ""
+    description: str = ""
+    category_id: int | None = None
+    is_hot: bool = False
+    sort_order: int = 0
+    price: float | None = None
+    discount_price: float | None = None
+    show_price: bool = False
+    attributes: list[AttributeItem] = []
+    variants: list[VariantItem] = []
+    images: list[ImageItem] = []
+
+
+@app.post("/products/import")
+def bulk_import_products(items: list[BulkImportItem]):
+    db = get_db()
+    try:
+        imported = 0
+        skipped = 0
+        errors = []
+        for item in items:
+            if not item.model.strip():
+                skipped += 1
+                continue
+            existing = db.query(Product).filter_by(model=item.model.strip()).first()
+            if existing:
+                skipped += 1
+                continue
+            try:
+                p = Product(
+                    name=item.name, model=item.model.strip(), description=item.description,
+                    category_id=item.category_id, is_hot=item.is_hot,
+                    sort_order=item.sort_order, price=item.price,
+                    discount_price=item.discount_price, show_price=item.show_price,
+                )
+                db.add(p)
+                db.flush()
+                for a in item.attributes:
+                    db.add(ProductAttribute(product_id=p.id, key=a.key, value=a.value, sort_order=a.sort_order))
+                for v in item.variants:
+                    db.add(ProductVariant(product_id=p.id, variant_type=v.variant_type, variant_value=v.variant_value, sort_order=v.sort_order))
+                for img in item.images:
+                    db.add(ProductImage(product_id=p.id, url=img.url, sort_order=img.sort_order))
+                db.commit()
+                imported += 1
+            except Exception as e:
+                db.rollback()
+                errors.append(f"{item.model}: {str(e)}")
+        return {"imported": imported, "skipped": skipped, "errors": errors}
     finally:
         db.close()
 
