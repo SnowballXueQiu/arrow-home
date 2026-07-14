@@ -2,17 +2,18 @@ services:
   db:
     image: mysql:8
     restart: unless-stopped
+    env_file: .env
     environment:
-      MYSQL_ROOT_PASSWORD: r00t_arR0w_2025
-      MYSQL_DATABASE: arrow_home
-      MYSQL_USER: arrow
-      MYSQL_PASSWORD: xK9mQ3pL7wN2vB5j
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "33061:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "arrow", "-pxK9mQ3pL7wN2vB5j"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -23,8 +24,11 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    env_file: .env
     environment:
-      DATABASE_URL: mysql+pymysql://arrow:xK9mQ3pL7wN2vB5j@db:3306/arrow_home
+      DATABASE_URL: ${DATABASE_URL}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
     ports:
       - "8000:8000"
     depends_on:
@@ -36,8 +40,9 @@ services:
       context: .
       dockerfile: backstage/Dockerfile
     restart: unless-stopped
+    env_file: .env
     environment:
-      BACKEND_URL: http://backend:8000
+      BACKEND_URL: ${BACKEND_URL}
     ports:
       - "3001:3001"
     depends_on:
