@@ -289,7 +289,7 @@ def list_products(
     page_size: int = Query(10, ge=1, le=1000),
     category_id: int | None = None,
     keyword: str | None = None,
-    include_subcategories: bool = False,
+    include_subcategories: bool = True,
     sort_by: str = Query("default", pattern="^(default|model|category|id)$"),
     sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
 ):
