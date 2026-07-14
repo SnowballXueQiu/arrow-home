@@ -18,10 +18,6 @@ COPY --from=deps /app/backstage/node_modules ./backstage/node_modules
 COPY backstage ./backstage
 COPY package.json pnpm-workspace.yaml ./
 ENV NEXT_TELEMETRY_DISABLED=1
-# BACKEND_URL is baked into the rewrite destination at build time.
-# Override via --build-arg for custom deployments; default works for compose.
-ARG BACKEND_URL=http://backend:8000
-ENV BACKEND_URL=${BACKEND_URL}
 WORKDIR /app/backstage
 RUN pnpm build
 

@@ -1,4 +1,4 @@
-const BASE = "/backend";
+const BASE = "/api/backend";
 
 function getToken(): string | undefined {
   if (typeof window === "undefined") return undefined;

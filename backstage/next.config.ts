@@ -22,14 +22,6 @@ const nextConfig: NextConfig = {
   // workspace root (one level up). This tells Next.js to trace files from
   // there so symlinks resolve correctly in the standalone bundle.
   outputFileTracingRoot: path.join(__dirname, "../"),
-  async rewrites() {
-    return [
-      {
-        source: "/backend/:path*",
-        destination: `${process.env.BACKEND_URL ?? "http://localhost:8000"}/:path*`,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
