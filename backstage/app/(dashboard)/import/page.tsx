@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchCategories, createProduct, createCategory, bulkImportProducts, exportAllData } from "@/lib/api";
+import { fetchCategories, createProduct, createCategory, bulkImportProducts, exportAllData, api } from "@/lib/api";
 import type { Category, ExportData } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/Button";
@@ -68,7 +68,7 @@ export default function ImportPage() {
   const [backupStatus, setBackupStatus] = useState<BackupStatus>("idle");
   const [backupData, setBackupData] = useState<ExportData | null>(null);
   const [backupProgress, setBackupProgress] = useState({ current: 0, total: 0, step: "" });
-  const [backupResult, setBackupResult] = useState<{ cats: number; products: number } | null>(null);
+  const [backupResult, setBackupResult] = useState<{ cats: number; products: number; banners: number; announcements: number; cases: number } | null>(null);
 
   // Export state
   const [exporting, setExporting] = useState(false);
@@ -96,7 +96,7 @@ export default function ImportPage() {
       a.download = `arrow-export-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success(`已导出 ${data.categories.length} 个品类、${data.products.length} 个产品`);
+      toast.success(`已导出 ${data.categories.length} 个品类、${data.products.length} 个产品、${data.cases?.length ?? 0} 个案例`);
     } catch (e) {
       toast.error("导出失败：" + (e instanceof Error ? e.message : "未知错误"));
     } finally {
@@ -109,7 +109,7 @@ export default function ImportPage() {
     try {
       const text = await file.text();
       const data = JSON.parse(text) as ExportData;
-      if (data.version !== 1 || !Array.isArray(data.categories) || !Array.isArray(data.products)) {
+      if (!Array.isArray(data.categories) || !Array.isArray(data.products)) {
         toast.error("文件格式不正确，请上传 arrow-export-*.json 备份文件");
         return;
       }
@@ -126,27 +126,24 @@ export default function ImportPage() {
 
     let catsImported = 0;
     let productsImported = 0;
+    let bannersImported = 0;
+    let announcementsImported = 0;
+    let casesImported = 0;
 
     try {
-      // 1. Import categories — top-level first, then children
+      // 1. categories — top-level first
       const sorted = [...backupData.categories].sort((a, b) => {
         if (!a.parent_id && b.parent_id) return -1;
         if (a.parent_id && !b.parent_id) return 1;
         return a.sort_order - b.sort_order;
       });
-
-      // old id → new id mapping
       const catIdMap: Record<number, number> = {};
       setBackupProgress({ current: 0, total: sorted.length, step: "导入品类" });
-
       for (let i = 0; i < sorted.length; i++) {
         const c = sorted[i];
         setBackupProgress({ current: i + 1, total: sorted.length, step: "导入品类" });
-        // check if exists by name + parent
         const newParentId = c.parent_id != null ? (catIdMap[c.parent_id] ?? null) : null;
-        const existing = cats.find(
-          (ex) => ex.name === c.name && ex.parent_id === newParentId
-        );
+        const existing = cats.find((ex) => ex.name === c.name && ex.parent_id === newParentId);
         if (existing) {
           catIdMap[c.id] = existing.id;
         } else {
@@ -156,7 +153,7 @@ export default function ImportPage() {
         }
       }
 
-      // 2. Import products via bulk endpoint (skips duplicates by model)
+      // 2. products
       setBackupProgress({ current: 0, total: backupData.products.length, step: "导入产品" });
       const productPayload = backupData.products.map((p) => ({
         model: p.model,
@@ -176,12 +173,57 @@ export default function ImportPage() {
       const bulkResult = await bulkImportProducts(productPayload);
       productsImported = bulkResult.imported;
 
+      // 3. banners
+      if (backupData.banners?.length) {
+        setBackupProgress({ current: 0, total: backupData.banners.length, step: "导入轮播图" });
+        for (let i = 0; i < backupData.banners.length; i++) {
+          const b = backupData.banners[i];
+          setBackupProgress({ current: i + 1, total: backupData.banners.length, step: "导入轮播图" });
+          await api.post("/banners", { ...b });
+          bannersImported++;
+        }
+      }
+
+      // 4. announcements
+      if (backupData.announcements?.length) {
+        setBackupProgress({ current: 0, total: backupData.announcements.length, step: "导入公告" });
+        for (let i = 0; i < backupData.announcements.length; i++) {
+          const a = backupData.announcements[i];
+          setBackupProgress({ current: i + 1, total: backupData.announcements.length, step: "导入公告" });
+          await api.post("/announcements", { content: a.content });
+          announcementsImported++;
+        }
+      }
+
+      // 5. company info (overwrite)
+      if (backupData.company && Object.keys(backupData.company).length > 0) {
+        setBackupProgress({ current: 0, total: 1, step: "恢复企业简介" });
+        await api.put("/company", backupData.company);
+        setBackupProgress({ current: 1, total: 1, step: "恢复企业简介" });
+      }
+
+      // 6. cases
+      if (backupData.cases?.length) {
+        setBackupProgress({ current: 0, total: backupData.cases.length, step: "导入工程案例" });
+        for (let i = 0; i < backupData.cases.length; i++) {
+          const c = backupData.cases[i];
+          setBackupProgress({ current: i + 1, total: backupData.cases.length, step: "导入工程案例" });
+          await api.post("/cases", c);
+          casesImported++;
+        }
+      }
+
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
-      const skippedMsg = bulkResult.skipped > 0 ? `，跳过重复 ${bulkResult.skipped} 个` : "";
-      setBackupResult({ cats: catsImported, products: productsImported });
+      qc.invalidateQueries({ queryKey: ["banners"] });
+      qc.invalidateQueries({ queryKey: ["announcements"] });
+      qc.invalidateQueries({ queryKey: ["company"] });
+      qc.invalidateQueries({ queryKey: ["cases"] });
+
+      const skippedMsg = bulkResult.skipped > 0 ? `，跳过重复产品 ${bulkResult.skipped} 个` : "";
+      setBackupResult({ cats: catsImported, products: productsImported, banners: bannersImported, announcements: announcementsImported, cases: casesImported });
       setBackupStatus("done");
-      toast.success(`备份恢复完成：${catsImported} 品类，${productsImported} 产品${skippedMsg}`);
+      toast.success(`备份恢复完成${skippedMsg}`);
     } catch (e) {
       toast.error("导入失败：" + (e instanceof Error ? e.message : "未知错误"));
       setBackupStatus("preview");
@@ -363,6 +405,30 @@ export default function ImportPage() {
                 <span className={styles.backupStatNum}>{backupData.products.length}</span>
                 <span className={styles.backupStatLabel}>个产品</span>
               </div>
+              {(backupData.banners?.length ?? 0) > 0 && (
+                <div className={styles.backupStat}>
+                  <span className={styles.backupStatNum}>{backupData.banners.length}</span>
+                  <span className={styles.backupStatLabel}>张轮播图</span>
+                </div>
+              )}
+              {(backupData.announcements?.length ?? 0) > 0 && (
+                <div className={styles.backupStat}>
+                  <span className={styles.backupStatNum}>{backupData.announcements.length}</span>
+                  <span className={styles.backupStatLabel}>条公告</span>
+                </div>
+              )}
+              {(backupData.cases?.length ?? 0) > 0 && (
+                <div className={styles.backupStat}>
+                  <span className={styles.backupStatNum}>{backupData.cases.length}</span>
+                  <span className={styles.backupStatLabel}>个案例</span>
+                </div>
+              )}
+              {backupData.company && Object.keys(backupData.company).length > 0 && (
+                <div className={styles.backupStat}>
+                  <span className={styles.backupStatNum}>✓</span>
+                  <span className={styles.backupStatLabel}>企业简介</span>
+                </div>
+              )}
             </div>
             <div className={styles.importActions}>
               <Button variant="secondary" onClick={resetBackup}>取消</Button>
@@ -399,6 +465,21 @@ export default function ImportPage() {
                 <Check size={20} />
                 <span className={styles.resultNum}>{backupResult.products}</span>
                 <span className={styles.resultLabel}>产品已导入</span>
+              </div>
+              <div className={`${styles.resultStat} ${styles.success}`}>
+                <Check size={20} />
+                <span className={styles.resultNum}>{backupResult.banners}</span>
+                <span className={styles.resultLabel}>轮播图已导入</span>
+              </div>
+              <div className={`${styles.resultStat} ${styles.success}`}>
+                <Check size={20} />
+                <span className={styles.resultNum}>{backupResult.announcements}</span>
+                <span className={styles.resultLabel}>公告已导入</span>
+              </div>
+              <div className={`${styles.resultStat} ${styles.success}`}>
+                <Check size={20} />
+                <span className={styles.resultNum}>{backupResult.cases}</span>
+                <span className={styles.resultLabel}>案例已导入</span>
               </div>
             </div>
             <div className={styles.resultActions}>

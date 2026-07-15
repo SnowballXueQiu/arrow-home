@@ -162,7 +162,7 @@ export const deleteBanner = (id: number) =>
 // ---------- Export / Import ----------
 
 export interface ExportData {
-  version: 1;
+  version: 2;
   exported_at: string;
   categories: {
     id: number;
@@ -175,6 +175,26 @@ export interface ExportData {
     variants: { variant_type: string; variant_value: string; sort_order: number }[];
     images: { url: string; sort_order: number }[];
   })[];
+  banners: {
+    title: string;
+    subtitle: string;
+    tag: string;
+    image_url: string;
+    sort_order: number;
+    is_active: number;
+  }[];
+  announcements: {
+    content: string;
+    is_active: boolean;
+  }[];
+  company: Partial<CompanyInfo>;
+  cases: {
+    name: string;
+    sort_order: number;
+    is_active: boolean;
+    images: string[];
+    descriptions: string[];
+  }[];
 }
 
 // ---------- Company / Cases ----------
@@ -214,12 +234,10 @@ export const deleteCase = (id: number) => api.delete<{ ok: boolean }>(`/cases/${
 export async function exportAllData(
   onProgress?: (current: number, total: number) => void
 ): Promise<ExportData> {
-  // 1. fetch all categories
-  const categories = await api.get<(Category & { product_count?: number })[]>(
-    "/categories?flat=true"
-  );
+  // 1. categories
+  const categories = await api.get<(Category & { product_count?: number })[]>("/categories?flat=true");
 
-  // 2. fetch all products (paginate with large page size)
+  // 2. products (paginated)
   const firstPage = await api.get<ProductListResponse>("/products?page=1&page_size=1000");
   let allBasic = firstPage.items;
   const totalPages = Math.ceil(firstPage.total / 1000);
@@ -228,7 +246,7 @@ export async function exportAllData(
     allBasic = allBasic.concat(r.items);
   }
 
-  // 3. fetch full detail for each product
+  // 3. product detail
   const products: ExportData["products"] = [];
   for (let i = 0; i < allBasic.length; i++) {
     onProgress?.(i, allBasic.length);
@@ -237,12 +255,28 @@ export async function exportAllData(
   }
   onProgress?.(allBasic.length, allBasic.length);
 
+  // 4. banners, announcements, company, cases
+  const banners = await api.get<Banner[]>("/banners");
+  const announcements = await api.get<{ id: number; content: string; is_active: boolean }[]>("/announcements");
+  const company = await api.get<CompanyInfo>("/company");
+  const cases = await api.get<ProjectCase[]>("/cases");
+
   return {
-    version: 1,
+    version: 2,
     exported_at: new Date().toISOString(),
-    categories: categories.map(({ id, name, parent_id, sort_order }) => ({
-      id, name, parent_id, sort_order,
-    })),
+    categories: categories.map(({ id, name, parent_id, sort_order }) => ({ id, name, parent_id, sort_order })),
     products,
+    banners: banners.map(({ title, subtitle, tag, image_url, sort_order, is_active }) => ({
+      title, subtitle, tag, image_url, sort_order, is_active,
+    })),
+    announcements: announcements.map(({ content, is_active }) => ({ content, is_active })),
+    company: (({ id: _id, updated_at: _u, ...rest }) => rest)(company),
+    cases: cases.map((c) => ({
+      name: c.name,
+      sort_order: c.sort_order,
+      is_active: c.is_active,
+      images: c.images.map((i) => i.url),
+      descriptions: c.descriptions.map((d) => d.content),
+    })),
   };
 }
