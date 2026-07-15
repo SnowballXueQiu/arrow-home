@@ -3,7 +3,10 @@ export default defineAppConfig({
     'pages/index/index',
     'pages/products/index',
     'pages/products/detail',
-    'pages/mine/index'
+    'pages/mine/index',
+    'pages/company/index',
+    'pages/cases/index',
+    'pages/cases/detail',
   ],
   tabBar: {
     color: '#999999',

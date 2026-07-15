@@ -177,6 +177,40 @@ export interface ExportData {
   })[];
 }
 
+// ---------- Company / Cases ----------
+
+export interface CompanyInfo {
+  id: number;
+  company_name: string;
+  slogan: string;
+  description: string;
+  phone: string;
+  address: string;
+  email: string;
+  wechat: string;
+  updated_at?: string;
+}
+
+export interface ProjectCase {
+  id: number;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at?: string;
+  images: { id: number; url: string; sort_order: number }[];
+  descriptions: { id: number; content: string; sort_order: number }[];
+}
+
+export const fetchCompany = () => api.get<CompanyInfo>("/company");
+export const updateCompany = (data: Partial<CompanyInfo>) => api.put<{ ok: boolean }>("/company", data);
+
+export const fetchCases = () => api.get<ProjectCase[]>("/cases");
+export const createCase = (data: { name: string; sort_order?: number; is_active?: boolean; images: string[]; descriptions: string[] }) =>
+  api.post<{ id: number }>("/cases", data);
+export const updateCase = (id: number, data: { name?: string; sort_order?: number; is_active?: boolean; images?: string[]; descriptions?: string[] }) =>
+  api.put<{ ok: boolean }>(`/cases/${id}`, data);
+export const deleteCase = (id: number) => api.delete<{ ok: boolean }>(`/cases/${id}`);
+
 export async function exportAllData(
   onProgress?: (current: number, total: number) => void
 ): Promise<ExportData> {

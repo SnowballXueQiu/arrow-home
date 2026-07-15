@@ -8,6 +8,8 @@ import {
   Tags,
   FileSpreadsheet,
   LogOut,
+  Building2,
+  HardHat,
 } from "lucide-react";
 import { toast } from "sonner";
 import styles from "./Sidebar.module.css";
@@ -17,6 +19,8 @@ const NAV = [
   { href: "/categories", icon: Tags, label: "品类管理", desc: "Categories" },
   { href: "/products", icon: Package, label: "产品管理", desc: "Products" },
   { href: "/import", icon: FileSpreadsheet, label: "批量导入", desc: "Import" },
+  { href: "/company", icon: Building2, label: "企业简介", desc: "Company" },
+  { href: "/cases", icon: HardHat, label: "工程案例", desc: "Cases" },
 ];
 
 export function Sidebar() {

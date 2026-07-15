@@ -14,6 +14,7 @@ export default function Index() {
   const [banners, setBanners] = useState([])
   const [hotProducts, setHotProducts] = useState([])
   const [announcements, setAnnouncements] = useState([])
+  const [company, setCompany] = useState(null)
   const [activeSlide, setActiveSlide] = useState(0)
 
   useEffect(() => { loadData() }, [])
@@ -21,19 +22,23 @@ export default function Index() {
 
   const loadData = async () => {
     try {
-      const [b, h, a] = await Promise.all([
+      const [b, h, a, c] = await Promise.all([
         request('/banners'),
         request('/products/hot'),
         request('/announcements'),
+        request('/company'),
       ])
       setBanners(b || [])
       setHotProducts(h || [])
       setAnnouncements(a || [])
+      setCompany(c || null)
     } catch (e) { console.error(e) }
   }
 
   const goToProduct = (id) => Taro.navigateTo({ url: `/pages/products/detail?id=${id}` })
   const goToProducts = () => Taro.switchTab({ url: '/pages/products/index' })
+  const goToCompany = () => Taro.navigateTo({ url: '/pages/company/index' })
+  const goToCases = () => Taro.navigateTo({ url: '/pages/cases/index' })
 
   const slides = banners.length > 0 ? banners : FALLBACK_BANNERS
 
@@ -109,8 +114,31 @@ export default function Index() {
               <Text className='qnav-label'>{item.label}</Text>
             </View>
           ))}
+          <View className='qnav-item' onClick={goToCases}>
+            <View className='qnav-icon' style={{ background: getPlaceholderGrad(QUICK_NAV.length) }}>
+              <Text className='qnav-abbr'>案</Text>
+            </View>
+            <Text className='qnav-label'>工程案例</Text>
+          </View>
         </View>
       </View>
+
+      {/* ── COMPANY CARD ── */}
+      {company && (company.company_name || company.slogan) && (
+        <View className='section'>
+          <View className='section-hd'>
+            <Text className='section-label'>关于我们</Text>
+          </View>
+          <View className='company-card' onClick={goToCompany}>
+            <View className='company-card-inner'>
+              <Text className='company-card-name'>{company.company_name || 'ARROW'}</Text>
+              {company.slogan ? <Text className='company-card-slogan'>{company.slogan}</Text> : null}
+              <Text className='company-card-cta'>了解我们 →</Text>
+            </View>
+            <Text className='company-card-wm'>A</Text>
+          </View>
+        </View>
+      )}
 
       {/* ── HOT PRODUCTS ── */}
       <View className='section'>

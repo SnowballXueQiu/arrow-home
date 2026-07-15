@@ -9,7 +9,7 @@ import bcrypt
 from database import (
     get_db, init_db,
     User, Category, Product, ProductAttribute, ProductVariant, ProductImage,
-    Banner, Announcement,
+    Banner, Announcement, CompanyInfo, ProjectCase, ProjectCaseImage, ProjectCaseDesc,
 )
 
 
@@ -583,6 +583,163 @@ def delete_announcement(ann_id: int):
         a = db.query(Announcement).filter_by(id=ann_id).first()
         if a:
             db.delete(a)
+            db.commit()
+        return {"ok": True}
+    finally:
+        db.close()
+
+
+# --- Company Info ---
+
+class CompanyInfoUpdate(BaseModel):
+    company_name: str | None = None
+    slogan: str | None = None
+    description: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    email: str | None = None
+    wechat: str | None = None
+
+@app.get("/company")
+def get_company():
+    db = get_db()
+    try:
+        info = db.query(CompanyInfo).filter_by(id=1).first()
+        if not info:
+            return {"id": 1, "company_name": "", "slogan": "", "description": "", "phone": "", "address": "", "email": "", "wechat": ""}
+        return {
+            "id": info.id,
+            "company_name": info.company_name or "",
+            "slogan": info.slogan or "",
+            "description": info.description or "",
+            "phone": info.phone or "",
+            "address": info.address or "",
+            "email": info.email or "",
+            "wechat": info.wechat or "",
+            "updated_at": str(info.updated_at) if info.updated_at else None,
+        }
+    finally:
+        db.close()
+
+@app.put("/company")
+def update_company(req: CompanyInfoUpdate):
+    db = get_db()
+    try:
+        info = db.query(CompanyInfo).filter_by(id=1).first()
+        if not info:
+            info = CompanyInfo(id=1)
+            db.add(info)
+        for field in ("company_name", "slogan", "description", "phone", "address", "email", "wechat"):
+            val = getattr(req, field)
+            if val is not None:
+                setattr(info, field, val)
+        db.commit()
+        return {"ok": True}
+    finally:
+        db.close()
+
+
+# --- Project Cases ---
+
+class ProjectCaseCreate(BaseModel):
+    name: str
+    sort_order: int = 0
+    is_active: bool = True
+    images: list[str] = []
+    descriptions: list[str] = []
+
+class ProjectCaseUpdate(BaseModel):
+    name: str | None = None
+    sort_order: int | None = None
+    is_active: bool | None = None
+    images: list[str] | None = None
+    descriptions: list[str] | None = None
+
+def _ser_case(c) -> dict:
+    return {
+        "id": c.id,
+        "name": c.name,
+        "sort_order": c.sort_order,
+        "is_active": bool(c.is_active),
+        "created_at": str(c.created_at) if c.created_at else None,
+        "images": [{"id": i.id, "url": i.url, "sort_order": i.sort_order} for i in c.images],
+        "descriptions": [{"id": d.id, "content": d.content, "sort_order": d.sort_order} for d in c.descriptions],
+    }
+
+@app.get("/cases")
+def list_cases(active_only: bool = False):
+    db = get_db()
+    try:
+        q = db.query(ProjectCase)
+        if active_only:
+            q = q.filter_by(is_active=True)
+        cases = q.order_by(ProjectCase.sort_order, ProjectCase.id).all()
+        return [_ser_case(c) for c in cases]
+    finally:
+        db.close()
+
+@app.get("/cases/{case_id}")
+def get_case(case_id: int):
+    db = get_db()
+    try:
+        c = db.query(ProjectCase).filter_by(id=case_id).first()
+        if not c:
+            raise HTTPException(404, "案例不存在")
+        return _ser_case(c)
+    finally:
+        db.close()
+
+@app.post("/cases")
+def create_case(req: ProjectCaseCreate):
+    db = get_db()
+    try:
+        c = ProjectCase(name=req.name, sort_order=req.sort_order, is_active=req.is_active)
+        db.add(c)
+        db.flush()
+        for i, url in enumerate(req.images):
+            db.add(ProjectCaseImage(case_id=c.id, url=url, sort_order=i))
+        for i, content in enumerate(req.descriptions):
+            db.add(ProjectCaseDesc(case_id=c.id, content=content, sort_order=i))
+        db.commit()
+        return {"id": c.id}
+    finally:
+        db.close()
+
+@app.put("/cases/{case_id}")
+def update_case(case_id: int, req: ProjectCaseUpdate):
+    db = get_db()
+    try:
+        c = db.query(ProjectCase).filter_by(id=case_id).first()
+        if not c:
+            raise HTTPException(404, "案例不存在")
+        if req.name is not None:
+            c.name = req.name
+        if req.sort_order is not None:
+            c.sort_order = req.sort_order
+        if req.is_active is not None:
+            c.is_active = req.is_active
+        if req.images is not None:
+            for img in list(c.images):
+                db.delete(img)
+            for i, url in enumerate(req.images):
+                db.add(ProjectCaseImage(case_id=c.id, url=url, sort_order=i))
+        if req.descriptions is not None:
+            for d in list(c.descriptions):
+                db.delete(d)
+            for i, content in enumerate(req.descriptions):
+                db.add(ProjectCaseDesc(case_id=c.id, content=content, sort_order=i))
+        db.commit()
+        return {"ok": True}
+    finally:
+        db.close()
+
+@app.delete("/cases/{case_id}")
+def delete_case(case_id: int):
+    db = get_db()
+    try:
+        c = db.query(ProjectCase).filter_by(id=case_id).first()
+        if c:
+            db.delete(c)
             db.commit()
         return {"ok": True}
     finally:

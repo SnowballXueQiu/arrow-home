@@ -1,0 +1,148 @@
+.company {
+  background: var(--cream);
+  min-height: 100vh;
+  padding-bottom: 60rpx;
+}
+
+.co-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.co-loading-text {
+  font-size: 28rpx;
+  color: var(--ink-dim);
+}
+
+/* Hero */
+.co-hero {
+  background: var(--ink);
+  padding: 80rpx 48rpx 64rpx;
+  position: relative;
+  overflow: hidden;
+}
+.co-wm {
+  position: absolute;
+  right: -20rpx;
+  top: -20rpx;
+  font-size: 260rpx;
+  font-weight: 800;
+  color: rgba(255,255,255,0.06);
+  letter-spacing: -8rpx;
+  line-height: 1;
+  pointer-events: none;
+}
+.co-hero-body {
+  position: relative;
+  z-index: 1;
+}
+.co-name {
+  display: block;
+  font-size: 56rpx;
+  font-weight: 300;
+  color: #ffffff;
+  letter-spacing: 4rpx;
+  margin-bottom: 16rpx;
+}
+.co-slogan {
+  display: block;
+  font-size: 26rpx;
+  color: var(--gold-light);
+  letter-spacing: 2rpx;
+}
+
+/* Sections */
+.co-section {
+  padding: 40rpx 32rpx 0;
+}
+.co-section-hd {
+  margin-bottom: 20rpx;
+}
+.co-section-label {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 3rpx;
+  text-transform: uppercase;
+}
+
+/* Description */
+.co-desc-block {
+  background: var(--white);
+  border-radius: 20rpx;
+  padding: 32rpx;
+  box-shadow: var(--shadow-sm);
+}
+.co-desc {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: var(--ink-mid);
+  margin-bottom: 16rpx;
+}
+.co-desc:last-child {
+  margin-bottom: 0;
+}
+
+/* Contact card */
+.co-contact-card {
+  background: var(--white);
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.co-contact-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 28rpx 32rpx;
+  border-bottom: 1rpx solid var(--border);
+}
+.co-contact-row--last {
+  border-bottom: none;
+}
+.co-contact-icon {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 12rpx;
+  background: var(--gold-pale);
+  color: var(--gold);
+  font-size: 20rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+  line-height: 52rpx;
+  text-align: center;
+}
+.co-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  flex: 1;
+}
+.co-contact-key {
+  font-size: 22rpx;
+  color: var(--ink-dim);
+}
+.co-contact-val {
+  font-size: 28rpx;
+  color: var(--ink);
+  font-weight: 500;
+}
+.co-contact-val--link {
+  color: var(--gold);
+}
+
+/* Footer */
+.co-footer {
+  text-align: center;
+  padding: 60rpx 32rpx 0;
+}
+.co-footer-text {
+  font-size: 22rpx;
+  color: var(--ink-dim);
+  letter-spacing: 2rpx;
+}

@@ -121,6 +121,48 @@ class Announcement(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class CompanyInfo(Base):
+    __tablename__ = "company_info"
+    id = Column(Integer, primary_key=True, default=1)
+    company_name = Column(String(255), default="")
+    slogan = Column(String(255), default="")
+    description = Column(Text, default="")
+    phone = Column(String(100), default="")
+    address = Column(String(255), default="")
+    email = Column(String(255), default="")
+    wechat = Column(String(100), default="")
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class ProjectCase(Base):
+    __tablename__ = "project_case"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    sort_order = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    images = relationship("ProjectCaseImage", back_populates="case", cascade="all, delete-orphan", order_by="ProjectCaseImage.sort_order")
+    descriptions = relationship("ProjectCaseDesc", back_populates="case", cascade="all, delete-orphan", order_by="ProjectCaseDesc.sort_order")
+
+
+class ProjectCaseImage(Base):
+    __tablename__ = "project_case_image"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    case_id = Column(Integer, ForeignKey("project_case.id", ondelete="CASCADE"), nullable=False)
+    url = Column(Text, nullable=False)
+    sort_order = Column(Integer, default=0)
+    case = relationship("ProjectCase", back_populates="images")
+
+
+class ProjectCaseDesc(Base):
+    __tablename__ = "project_case_desc"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    case_id = Column(Integer, ForeignKey("project_case.id", ondelete="CASCADE"), nullable=False)
+    content = Column(Text, nullable=False)
+    sort_order = Column(Integer, default=0)
+    case = relationship("ProjectCase", back_populates="descriptions")
+
+
 # ---------- Helpers ----------
 
 def get_db() -> Session:
