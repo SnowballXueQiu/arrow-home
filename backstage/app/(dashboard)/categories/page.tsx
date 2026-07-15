@@ -29,7 +29,7 @@ export default function CategoriesPage() {
   const { data: flatList = [] } = useQuery({
     queryKey: ["categories", "flat"],
     queryFn: () =>
-      fetch("/backend/categories?flat=true").then((r) => r.json()) as Promise<(Category & { product_count: number })[]>,
+      fetch("/api/backend/categories?flat=true").then((r) => r.json()) as Promise<(Category & { product_count: number })[]>,
   });
 
   const { data: catProducts = [], isPending: catProductsPending } = useQuery({
@@ -191,13 +191,11 @@ export default function CategoriesPage() {
               }
             >
               <option value="">— 顶级品类 —</option>
-              {flatList
-                .filter((c) => c.parent_id === null)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+              {flat.map(({ cat, depth, idx }) => (
+                <option key={cat.id} value={cat.id}>
+                  {"　".repeat(depth)}#{idx} {cat.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className={styles.formActions}>

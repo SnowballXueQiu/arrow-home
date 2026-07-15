@@ -7,21 +7,40 @@ import './index.scss'
 
 export default function Products() {
   const [products, setProducts] = useState([])
-  const [categories, setCategories] = useState([])
-  const [activeCategory, setActiveCategory] = useState(null)
+  const [tree, setTree] = useState([])       // full category tree
+  const [l2List, setL2List] = useState([])   // L2 under 经营产品
+  const [l3List, setL3List] = useState([])   // L3 under active L2
+  const [activeL2, setActiveL2] = useState(null)
+  const [activeL3, setActiveL3] = useState(null)
   const [keyword, setKeyword] = useState('')
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
 
-  useEffect(() => { loadCategories(); loadProducts(1, null, '') }, [])
-  usePullDownRefresh(() => { loadProducts(1, activeCategory, keyword).then(() => Taro.stopPullDownRefresh()) })
+  useEffect(() => {
+    loadCategories()
+    loadProducts(1, null, '')
+  }, [])
+
+  usePullDownRefresh(() => {
+    loadProducts(1, activeL3 ?? activeL2, keyword).then(() => Taro.stopPullDownRefresh())
+  })
 
   const loadCategories = async () => {
-    try { setCategories((await request('/categories')) || []) } catch (e) { console.error(e) }
+    try {
+      // Tree endpoint returns full nested structure
+      const roots = await request('/categories')
+      if (!roots || !roots.length) return
+      setTree(roots)
+
+      // Find 经营产品 L1 node; fall back to showing roots as L2 if no such node
+      const jingying = roots.find(r => r.name === '经营产品')
+      const l2 = jingying ? (jingying.children || []) : roots
+      setL2List(l2)
+    } catch (e) { console.error(e) }
   }
 
-  const loadProducts = async (pageNum = 1, categoryId = activeCategory, search = keyword) => {
+  const loadProducts = async (pageNum = 1, categoryId = null, search = keyword) => {
     if (loading) return
     setLoading(true)
     try {
@@ -38,8 +57,33 @@ export default function Products() {
     } catch (e) { console.error(e) } finally { setLoading(false) }
   }
 
-  const handleSearch = useCallback(() => { setPage(1); loadProducts(1, activeCategory, keyword) }, [keyword, activeCategory])
-  const handleCat = (id) => { const c = id === activeCategory ? null : id; setActiveCategory(c); setPage(1); loadProducts(1, c, keyword) }
+  const handleSearch = useCallback(() => {
+    setPage(1)
+    loadProducts(1, activeL3 ?? activeL2, keyword)
+  }, [keyword, activeL2, activeL3])
+
+  const handleL2 = (id) => {
+    const newL2 = id === activeL2 ? null : id
+    setActiveL2(newL2)
+    setActiveL3(null)
+    // Update L3 list
+    if (newL2) {
+      const node = findNode(tree, newL2)
+      setL3List(node ? node.children : [])
+    } else {
+      setL3List([])
+    }
+    setPage(1)
+    loadProducts(1, newL2, keyword)
+  }
+
+  const handleL3 = (id) => {
+    const newL3 = id === activeL3 ? null : id
+    setActiveL3(newL3)
+    setPage(1)
+    loadProducts(1, newL3 ?? activeL2, keyword)
+  }
+
   const goDetail = (id) => Taro.navigateTo({ url: `/pages/products/detail?id=${id}` })
 
   return (
@@ -60,23 +104,53 @@ export default function Products() {
             onConfirm={handleSearch}
             confirmType='search'
           />
-          {keyword ? <Text className='search-clear' onClick={() => { setKeyword(''); loadProducts(1, activeCategory, '') }}>✕</Text> : null}
+          {keyword ? <Text className='search-clear' onClick={() => { setKeyword(''); loadProducts(1, activeL3 ?? activeL2, '') }}>✕</Text> : null}
         </View>
       </View>
 
-      <ScrollView className='cat-scroll' scrollX showScrollbar={false}>
+      {/* L2 category tabs */}
+      <ScrollView className='cat-scroll cat-scroll--l2' scrollX showScrollbar={false}>
         <View className='cat-row'>
-          {[{ id: null, name: '全部' }, ...categories].map((c) => (
+          <View
+            className={`cat-tag${activeL2 === null ? ' cat-tag--on' : ''}`}
+            onClick={() => handleL2(null)}
+          >
+            <Text className='cat-tag-text'>全部</Text>
+          </View>
+          {l2List.map((c) => (
             <View
               key={c.id}
-              className={`cat-tag${activeCategory === c.id ? ' cat-tag--on' : ''}`}
-              onClick={() => handleCat(c.id)}
+              className={`cat-tag${activeL2 === c.id ? ' cat-tag--on' : ''}`}
+              onClick={() => handleL2(c.id)}
             >
               <Text className='cat-tag-text'>{c.name}</Text>
             </View>
           ))}
         </View>
       </ScrollView>
+
+      {/* L3 sub-category tabs — only when L2 is selected and has children */}
+      {l3List.length > 0 && (
+        <ScrollView className='cat-scroll cat-scroll--l3' scrollX showScrollbar={false}>
+          <View className='cat-row'>
+            <View
+              className={`cat-tag cat-tag--sm${activeL3 === null ? ' cat-tag--on' : ''}`}
+              onClick={() => handleL3(null)}
+            >
+              <Text className='cat-tag-text'>全部</Text>
+            </View>
+            {l3List.map((c) => (
+              <View
+                key={c.id}
+                className={`cat-tag cat-tag--sm${activeL3 === c.id ? ' cat-tag--on' : ''}`}
+                onClick={() => handleL3(c.id)}
+              >
+                <Text className='cat-tag-text'>{c.name}</Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      )}
 
       <View className='prod-grid'>
         {products.map((p, i) => {
@@ -122,7 +196,7 @@ export default function Products() {
         </View>
       )}
       {!loading && hasMore && products.length > 0 && (
-        <View className='load-more' onClick={() => loadProducts(page + 1)}>
+        <View className='load-more' onClick={() => loadProducts(page + 1, activeL3 ?? activeL2, keyword)}>
           <Text className='load-more-text'>加载更多</Text>
         </View>
       )}
@@ -131,4 +205,15 @@ export default function Products() {
       )}
     </View>
   )
+}
+
+function findNode(nodes, id) {
+  for (const n of nodes) {
+    if (n.id === id) return n
+    if (n.children?.length) {
+      const found = findNode(n.children, id)
+      if (found) return found
+    }
+  }
+  return null
 }

@@ -53,6 +53,14 @@
   padding: 0 24rpx 20rpx;
   white-space: nowrap;
 }
+.cat-scroll--l2 {
+  padding-top: 16rpx;
+  border-bottom: 1rpx solid var(--border);
+}
+.cat-scroll--l3 {
+  background: var(--cream);
+  padding: 12rpx 24rpx 14rpx;
+}
 .cat-row {
   display: inline-flex;
   gap: 12rpx;
@@ -66,6 +74,10 @@
   background: var(--cream);
   border: 1rpx solid var(--border);
   white-space: nowrap;
+}
+.cat-tag--sm {
+  height: 48rpx;
+  padding: 0 22rpx;
 }
 .cat-tag--on {
   background: var(--gold-pale);
