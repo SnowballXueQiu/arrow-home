@@ -66,7 +66,7 @@ export default function CategoriesPage() {
     e.preventDefault();
     createMut.mutate({
       name: form.name.trim(),
-      parent_id: form.parent_id ? Number(form.parent_id) : null,
+      parent_id: form.parent_id ? Number(form.parent_id) : (jingYingChan?.id ?? null),
       sort_order: 0,
     });
   }
@@ -88,7 +88,9 @@ export default function CategoriesPage() {
     return result;
   }
 
-  const flat = flattenTree(tree);
+  const jingYingChan = tree.find((c) => c.name === "经营产品");
+  const displayTree = jingYingChan?.children ?? [];
+  const flat = flattenTree(displayTree);
   const deletingItem = flat.find((f) => f.cat.id === deletingId);
 
   return (
@@ -182,7 +184,7 @@ export default function CategoriesPage() {
             />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>父级品类（留空为顶级）</label>
+            <label className={styles.label}>父级品类</label>
             <select
               className={styles.input}
               value={form.parent_id}
@@ -190,10 +192,10 @@ export default function CategoriesPage() {
                 setForm((f) => ({ ...f, parent_id: e.target.value }))
               }
             >
-              <option value="">— 顶级品类 —</option>
-              {flat.map(({ cat, depth, idx }) => (
+              <option value="">— 新建二级分类（直属经营产品）—</option>
+              {flat.filter((f) => f.depth <= 1).map(({ cat, depth, idx }) => (
                 <option key={cat.id} value={cat.id}>
-                  {"　".repeat(depth)}#{idx} {cat.name}
+                  {"　".repeat(depth)}#{idx} {cat.name}（新建{depth === 0 ? "三" : "四"}级分类）
                 </option>
               ))}
             </select>

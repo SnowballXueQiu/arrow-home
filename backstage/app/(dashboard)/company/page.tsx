@@ -13,6 +13,7 @@ import {
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/Button";
+import { ImageUploader, type ImageItem } from "@/components/ImageUploader";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import styles from "./company.module.css";
@@ -69,13 +70,19 @@ export default function CompanyPage() {
   });
 
   // Banner add form state
-  const [bannerForm, setBannerForm] = useState({ title: "", subtitle: "", tag: "" });
+  const [bannerForm, setBannerForm] = useState<{ title: string; subtitle: string; tag: string; imageItems: ImageItem[] }>({ title: "", subtitle: "", tag: "", imageItems: [] });
   const addBannerMut = useMutation({
     mutationFn: () =>
-      api.post<{ id: number }>("/banners", { ...bannerForm, sort_order: 0 }),
+      api.post<{ id: number }>("/banners", {
+        title: bannerForm.title,
+        subtitle: bannerForm.subtitle,
+        tag: bannerForm.tag,
+        image_url: bannerForm.imageItems[0]?.url ?? "",
+        sort_order: 0,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["banners"] });
-      setBannerForm({ title: "", subtitle: "", tag: "" });
+      setBannerForm({ title: "", subtitle: "", tag: "", imageItems: [] });
       toast.success("已添加");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -219,6 +226,10 @@ export default function CompanyPage() {
             ) : (
               banners.map((b: Banner) => (
                 <div key={b.id} className={styles.listItem}>
+                  {b.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={b.image_url} alt="" style={{ width: 56, height: 40, objectFit: "cover", borderRadius: 4, flexShrink: 0 }} />
+                  )}
                   <div className={styles.listItemInfo}>
                     <span className={styles.listItemTitle}>{b.title}</span>
                     {(b.subtitle || b.tag) && (
@@ -264,6 +275,13 @@ export default function CompanyPage() {
                   value={bannerForm.tag}
                   onChange={(e) => setBannerForm((p) => ({ ...p, tag: e.target.value }))}
                   placeholder="NEW / HOT"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>轮播图图片</label>
+                <ImageUploader
+                  value={bannerForm.imageItems}
+                  onChange={(items) => setBannerForm((p) => ({ ...p, imageItems: items.slice(0, 1) }))}
                 />
               </div>
               <Button

@@ -18,9 +18,9 @@ const NAV = [
   { href: "/", icon: LayoutGrid, label: "概览", desc: "Dashboard" },
   { href: "/categories", icon: Tags, label: "品类管理", desc: "Categories" },
   { href: "/products", icon: Package, label: "产品管理", desc: "Products" },
-  { href: "/import", icon: FileSpreadsheet, label: "批量导入", desc: "Import" },
   { href: "/company", icon: Building2, label: "企业简介", desc: "Company" },
   { href: "/cases", icon: HardHat, label: "工程案例", desc: "Cases" },
+  { href: "/import", icon: FileSpreadsheet, label: "批量导入", desc: "Import" },
 ];
 
 export function Sidebar() {

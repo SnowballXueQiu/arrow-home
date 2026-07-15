@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/Button";
+import { ImageUploader, type ImageItem, uid } from "@/components/ImageUploader";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import styles from "./cases.module.css";
@@ -19,7 +20,7 @@ type CaseFormState = {
   name: string;
   is_active: boolean;
   sort_order: number;
-  images: string[];
+  images: ImageItem[];
   descriptions: string[];
 };
 
@@ -27,7 +28,7 @@ const emptyForm = (): CaseFormState => ({
   name: "",
   is_active: true,
   sort_order: 0,
-  images: [""],
+  images: [],
   descriptions: [""],
 });
 
@@ -44,7 +45,7 @@ function CaseModal({
 }) {
   const [form, setForm] = useState<CaseFormState>(initial);
 
-  const setImages = (imgs: string[]) => setForm((p) => ({ ...p, images: imgs }));
+  const setImages = (imgs: ImageItem[]) => setForm((p) => ({ ...p, images: imgs }));
   const setDescs = (descs: string[]) => setForm((p) => ({ ...p, descriptions: descs }));
 
   return (
@@ -84,38 +85,9 @@ function CaseModal({
           </div>
 
           {/* Images */}
-          <div className={styles.listSection}>
-            <div className={styles.listSectionHeader}>
-              <span className={styles.listSectionTitle}>图片列表</span>
-              <Button
-                variant="secondary"
-                icon={<Plus size={12} />}
-                onClick={() => setImages([...form.images, ""])}
-              >
-                添加图片
-              </Button>
-            </div>
-            {form.images.map((url, i) => (
-              <div key={i} className={styles.listRow}>
-                <input
-                  className={styles.listRowInput}
-                  value={url}
-                  onChange={(e) => {
-                    const imgs = [...form.images];
-                    imgs[i] = e.target.value;
-                    setImages(imgs);
-                  }}
-                  placeholder="图片 URL"
-                />
-                {form.images.length > 1 && (
-                  <Button
-                    variant="secondary"
-                    icon={<Trash2 size={12} />}
-                    onClick={() => setImages(form.images.filter((_, j) => j !== i))}
-                  />
-                )}
-              </div>
-            ))}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>图片</label>
+            <ImageUploader value={form.images} onChange={setImages} />
           </div>
 
           {/* Descriptions */}
@@ -185,7 +157,7 @@ export default function CasesPage() {
         name: data.name,
         sort_order: data.sort_order,
         is_active: data.is_active,
-        images: data.images.filter((u) => u.trim()),
+        images: data.images.map((i) => i.url).filter(Boolean),
         descriptions: data.descriptions.filter((d) => d.trim()),
       }),
     onSuccess: () => {
@@ -202,7 +174,7 @@ export default function CasesPage() {
         name: data.name,
         sort_order: data.sort_order,
         is_active: data.is_active,
-        images: data.images.filter((u) => u.trim()),
+        images: data.images.map((i) => i.url).filter(Boolean),
         descriptions: data.descriptions.filter((d) => d.trim()),
       }),
     onSuccess: () => {
@@ -321,7 +293,7 @@ export default function CasesPage() {
                   name: modalState.editing.name,
                   is_active: modalState.editing.is_active,
                   sort_order: modalState.editing.sort_order,
-                  images: modalState.editing.images.map((i) => i.url).concat([""]),
+                  images: modalState.editing.images.map((i) => ({ _id: uid(), url: i.url })),
                   descriptions: modalState.editing.descriptions.map((d) => d.content).concat([""])  ,
                 }
               : emptyForm()
