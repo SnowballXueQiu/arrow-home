@@ -2,7 +2,7 @@
   "miniprogramRoot": "./dist",
   "projectname": "arrow-home",
   "description": "箭牌卫浴产品展示",
-  "appid": "touristappid",
+  "appid": "wx1178d8960756ff63",
   "setting": {
     "urlCheck": false,
     "es6": false,
