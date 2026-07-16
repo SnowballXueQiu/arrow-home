@@ -26,11 +26,15 @@ export default function Mine() {
       success: async (res) => {
         if (!res.confirm) return
         try {
-          const { code } = await Taro.login()
-          const auth = await request('/auth/login', 'POST', { code })
+          const loginRes = await Taro.login()
+          const auth = await request('/auth/login', 'POST', { code: loginRes.code })
           Taro.setStorageSync('token', auth.token)
           setUser(auth.user)
-        } catch (e) { console.error(e) }
+          Taro.showToast({ title: '登录成功', icon: 'success' })
+        } catch (e) {
+          console.error(e)
+          Taro.showToast({ title: '登录失败，请重试', icon: 'none' })
+        }
       }
     })
   }
