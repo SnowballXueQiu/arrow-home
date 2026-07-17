@@ -1,6 +1,6 @@
 import Taro from '@tarojs/taro'
 
-const BASE_URL = 'http://localhost:8000'
+const BASE_URL = 'https://backend-281917-9-1409081695.sh.run.tcloudbase.com'
 
 export const request = async (url, method = 'GET', data = {}) => {
   try {
