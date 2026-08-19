@@ -100,13 +100,16 @@ function ProductsInner() {
   const [searchInput, setSearchInput] = useState(keyword);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  function pushParams(params: Record<string, string | number | undefined>) {
+  function pushParams(
+    params: Record<string, string | number | undefined>,
+    resetPage = true
+  ) {
     const sp = new URLSearchParams(searchParams.toString());
     for (const [k, v] of Object.entries(params)) {
       if (v == null || v === "") sp.delete(k);
       else sp.set(k, String(v));
     }
-    sp.set("page", "1");
+    if (resetPage) sp.set("page", "1");
     router.push(`/products?${sp.toString()}`);
   }
 
@@ -353,7 +356,7 @@ function ProductsInner() {
             <button
               className={styles.paginBtn}
               disabled={page <= 1}
-              onClick={() => pushParams({ page: page - 1 })}
+              onClick={() => pushParams({ page: page - 1 }, false)}
             >
               <ChevronLeft size={15} />
             </button>
@@ -368,7 +371,7 @@ function ProductsInner() {
                 <button
                   key={p}
                   className={`${styles.paginBtn} ${p === page ? styles.paginActive : ""}`}
-                  onClick={() => pushParams({ page: p })}
+                  onClick={() => pushParams({ page: p }, false)}
                 >
                   {p}
                 </button>
@@ -377,7 +380,7 @@ function ProductsInner() {
             <button
               className={styles.paginBtn}
               disabled={page >= totalPages}
-              onClick={() => pushParams({ page: page + 1 })}
+              onClick={() => pushParams({ page: page + 1 }, false)}
             >
               <ChevronRight size={15} />
             </button>
