@@ -1,148 +1,28 @@
-.company {
-  background: var(--cream);
-  min-height: 100vh;
-  padding-bottom: 60rpx;
-}
-
-.co-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-}
-.co-loading-text {
-  font-size: 28rpx;
-  color: var(--ink-dim);
-}
-
-/* Hero */
-.co-hero {
-  background: var(--ink);
-  padding: 80rpx 48rpx 64rpx;
-  position: relative;
-  overflow: hidden;
-}
-.co-wm {
-  position: absolute;
-  right: -20rpx;
-  top: -20rpx;
-  font-size: 260rpx;
-  font-weight: 800;
-  color: rgba(255,255,255,0.06);
-  letter-spacing: -8rpx;
-  line-height: 1;
-  pointer-events: none;
-}
-.co-hero-body {
-  position: relative;
-  z-index: 1;
-}
-.co-name {
-  display: block;
-  font-size: 56rpx;
-  font-weight: 300;
-  color: #ffffff;
-  letter-spacing: 4rpx;
-  margin-bottom: 16rpx;
-}
-.co-slogan {
-  display: block;
-  font-size: 26rpx;
-  color: var(--gold-light);
-  letter-spacing: 2rpx;
-}
-
-/* Sections */
-.co-section {
-  padding: 40rpx 32rpx 0;
-}
-.co-section-hd {
-  margin-bottom: 20rpx;
-}
-.co-section-label {
-  font-size: 22rpx;
-  font-weight: 600;
-  color: var(--gold);
-  letter-spacing: 3rpx;
-  text-transform: uppercase;
-}
-
-/* Description */
-.co-desc-block {
-  background: var(--white);
-  border-radius: 20rpx;
-  padding: 32rpx;
-  box-shadow: var(--shadow-sm);
-}
-.co-desc {
-  display: block;
-  font-size: 28rpx;
-  line-height: 1.8;
-  color: var(--ink-mid);
-  margin-bottom: 16rpx;
-}
-.co-desc:last-child {
-  margin-bottom: 0;
-}
-
-/* Contact card */
-.co-contact-card {
-  background: var(--white);
-  border-radius: 20rpx;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-.co-contact-row {
-  display: flex;
-  align-items: flex-start;
-  padding: 28rpx 32rpx;
-  border-bottom: 1rpx solid var(--border);
-}
-.co-contact-row--last {
-  border-bottom: none;
-}
-.co-contact-icon {
-  width: 52rpx;
-  height: 52rpx;
-  border-radius: 12rpx;
-  background: var(--gold-pale);
-  color: var(--gold);
-  font-size: 20rpx;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-right: 24rpx;
-  line-height: 52rpx;
-  text-align: center;
-}
-.co-contact-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-  flex: 1;
-}
-.co-contact-key {
-  font-size: 22rpx;
-  color: var(--ink-dim);
-}
-.co-contact-val {
-  font-size: 28rpx;
-  color: var(--ink);
-  font-weight: 500;
-}
-.co-contact-val--link {
-  color: var(--gold);
-}
-
-/* Footer */
-.co-footer {
-  text-align: center;
-  padding: 60rpx 32rpx 0;
-}
-.co-footer-text {
-  font-size: 22rpx;
-  color: var(--ink-dim);
-  letter-spacing: 2rpx;
-}
+.company { min-height: 100vh; padding-bottom: 68rpx; background: var(--cream); }
+.co-loading { display: flex; align-items: center; justify-content: center; min-height: 65vh; }
+.co-loading-text { font-size: 25rpx; color: var(--ink-dim); }
+.co-hero { position: relative; min-height: 404rpx; overflow: hidden; padding: 48rpx 34rpx; background: #253b32; box-sizing: border-box; }
+.co-hero-no { position: relative; z-index: 1; display: block; font-size: 17rpx; letter-spacing: 3rpx; color: var(--clay-light); }
+.co-hero-body { position: relative; z-index: 1; margin-top: 140rpx; }
+.co-name { display: block; max-width: 590rpx; font-family: Georgia, 'Songti SC', serif; font-size: 54rpx; line-height: 1.16; color: #fff; }
+.co-slogan { display: block; margin-top: 17rpx; font-size: 24rpx; color: rgba(255,255,255,.7); }
+.co-wm { position: absolute; right: -22rpx; bottom: -112rpx; font-family: Georgia, serif; font-size: 475rpx; line-height: 1; color: rgba(255,255,255,.055); }
+.co-section { padding: 48rpx 24rpx 0; }
+.co-section-hd { margin-bottom: 17rpx; }
+.co-section-label { font-size: 17rpx; font-weight: 700; letter-spacing: 2rpx; color: var(--clay); }
+.co-desc-block { padding: 29rpx 24rpx; background: var(--paper); border-radius: 8rpx; box-shadow: var(--shadow-sm); }
+.co-desc { display: block; margin-bottom: 20rpx; font-size: 26rpx; line-height: 1.95; color: var(--ink-mid); }
+.co-desc:last-child { margin-bottom: 0; }
+.co-contact-card { overflow: hidden; background: var(--paper); border-radius: 8rpx; }
+.co-contact-row { display: flex; align-items: center; padding: 24rpx; border-bottom: 1rpx solid var(--border); }
+.co-contact-row--last { border-bottom: 0; }
+.co-contact-icon { display: flex; align-items: center; justify-content: center; width: 52rpx; height: 52rpx; margin-right: 18rpx; flex-shrink: 0; background: var(--clay-pale); border-radius: 3rpx; font-size: 28rpx; line-height: 1; color: var(--clay); }
+.co-contact-icon--wechat { font-size: 32rpx; }
+.co-contact-icon--email { font-size: 26rpx; }
+.co-contact-icon--address { font-size: 33rpx; }
+.co-contact-info { display: flex; flex: 1; flex-direction: column; gap: 3rpx; }
+.co-contact-key { font-size: 19rpx; color: var(--ink-dim); }
+.co-contact-val { font-size: 25rpx; color: var(--ink); }
+.co-contact-val--link { color: var(--clay); }
+.co-footer { text-align: center; padding: 70rpx 24rpx 0; }
+.co-footer-text { font-size: 17rpx; letter-spacing: 4rpx; color: var(--ink-dim); }

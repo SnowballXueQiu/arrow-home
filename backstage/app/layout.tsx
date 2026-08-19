@@ -4,8 +4,8 @@ import { Providers } from "./providers";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "箭牌卫浴 · 管理后台",
-  description: "ARROW 产品数据管理系统",
+  title: "正通科技 · 管理后台",
+  description: "ZHENGTONGKEJI 产品数据管理系统",
 };
 
 export default function RootLayout({

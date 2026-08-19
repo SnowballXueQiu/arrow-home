@@ -1,24 +1,30 @@
 import { useState, useEffect } from 'react'
-import { View, Text, Swiper, SwiperItem } from '@tarojs/components'
-import Taro, { usePullDownRefresh } from '@tarojs/taro'
+import { View, Text, Image, Swiper, SwiperItem } from '@tarojs/components'
+import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { request } from '../../utils/api'
 import { getPlaceholderGrad, QUICK_NAV } from '../../utils/constants'
+import brandLogo from '../../assets/brand/zhengtongkeji-symbol.png'
 import './index.scss'
 
 const FALLBACK_BANNERS = [
-  { id: 0, tag: 'NEW ARRIVAL', title: '智能卫浴', subtitle: '重新定义浴室生活' },
-  { id: 1, tag: 'FEATURED', title: '匠心系列', subtitle: '每一处细节都值得' },
+  { id: 0, tag: '新品上市', title: '智能卫浴', subtitle: '重新定义浴室生活' },
+  { id: 1, tag: '匠心之选', title: '匠心系列', subtitle: '每一处细节都值得' },
 ]
 
 export default function Index() {
   const [banners, setBanners] = useState([])
   const [hotProducts, setHotProducts] = useState([])
   const [announcements, setAnnouncements] = useState([])
+  const [activeAnnouncement, setActiveAnnouncement] = useState(0)
   const [company, setCompany] = useState(null)
   const [activeSlide, setActiveSlide] = useState(0)
 
   useEffect(() => { loadData() }, [])
   usePullDownRefresh(() => { loadData().then(() => Taro.stopPullDownRefresh()) })
+  useDidShow(() => {
+    const tabbar = Taro.getCurrentInstance().page?.getTabBar?.()
+    tabbar?.setData({ selected: 0 })
+  })
 
   const loadData = async () => {
     try {
@@ -39,19 +45,32 @@ export default function Index() {
   const goToProducts = () => Taro.switchTab({ url: '/pages/products/index' })
   const goToCompany = () => Taro.navigateTo({ url: '/pages/company/index' })
   const goToCases = () => Taro.navigateTo({ url: '/pages/cases/index' })
+  const openAnnouncement = () => {
+    const announcement = announcements[activeAnnouncement]
+    if (!announcement?.content) return
+    Taro.showModal({
+      title: '公告详情',
+      content: announcement.content,
+      showCancel: false,
+      confirmText: '知道了',
+      confirmColor: '#214EA9',
+    })
+  }
 
   const slides = banners.length > 0 ? banners : FALLBACK_BANNERS
 
   return (
     <View className='home'>
-
-      {/* ── NAV BAR ── */}
-      <View className='navbar'>
-        <Text className='navbar-brand'>ARROW</Text>
-        <Text className='navbar-sub'>箭牌卫浴</Text>
+      <View className='home-topbar'>
+        <View>
+          <Text className='home-brand'>正通科技</Text>
+          <Text className='home-brand-sub'>美好卫浴生活</Text>
+        </View>
+        <View className='home-logo-card'>
+          <Image className='home-logo' src={brandLogo} mode='aspectFit' />
+        </View>
       </View>
 
-      {/* ── HERO ── */}
       <View className='hero'>
         <Swiper
           className='hero-swiper'
@@ -65,14 +84,16 @@ export default function Index() {
                 style={{ background: getPlaceholderGrad(i) }}
                 onClick={() => s.link_product_id && goToProduct(s.link_product_id)}
               >
-                {/* large watermark letter */}
-                <Text className='hero-wm'>A</Text>
+                {s.image_url && <Image className='hero-image' src={s.image_url} mode='aspectFill' />}
+                <View className='hero-shade' />
+                <Text className='hero-edition'>0{i + 1}</Text>
                 <View className='hero-body'>
-                  <Text className='hero-tag'>{s.tag || 'ARROW'}</Text>
+                  <Text className='hero-tag'>{s.tag || '正通科技 · 卫浴空间'}</Text>
                   <Text className='hero-title'>{s.title}</Text>
                   <Text className='hero-sub'>{s.subtitle}</Text>
                   <View className='hero-btn' onClick={goToProducts}>
-                    <Text className='hero-btn-text'>查看系列</Text>
+                    <Text className='hero-btn-text'>探索系列</Text>
+                    <Text className='hero-btn-arrow'>→</Text>
                   </View>
                 </View>
               </View>
@@ -86,66 +107,81 @@ export default function Index() {
         </View>
       </View>
 
-      {/* ── ANNOUNCEMENT ── */}
       {announcements.length > 0 && (
         <View className='notice'>
-          <View className='notice-pill'><Text className='notice-pill-text'>公告</Text></View>
-          <Swiper className='notice-swiper' vertical autoplay circular interval={3500}>
+          <View className='notice-stem' />
+          <Text className='notice-label'>公告</Text>
+          <Swiper
+            className='notice-swiper'
+            vertical
+            autoplay
+            circular
+            interval={3500}
+            onChange={(e) => setActiveAnnouncement(e.detail.current)}
+          >
             {announcements.map((a, i) => (
               <SwiperItem key={a.id ?? i}>
                 <Text className='notice-text'>{a.content}</Text>
               </SwiperItem>
             ))}
           </Swiper>
+          <View className='notice-action' onClick={openAnnouncement}>
+            <Text className='notice-action-label'>查看全文</Text>
+            <Text className='notice-action-arrow'>→</Text>
+          </View>
         </View>
       )}
 
-      {/* ── QUICK NAV ── */}
       <View className='section'>
         <View className='section-hd'>
-          <Text className='section-label'>产品系列</Text>
+          <View>
+            <Text className='section-eyebrow'>正通科技 · 产品系列</Text>
+            <Text className='section-label'>产品系列</Text>
+          </View>
+          <Text className='section-index'>01</Text>
         </View>
         <View className='qnav'>
           {QUICK_NAV.map((item, i) => (
             <View key={item.abbr} className='qnav-item' onClick={goToProducts}>
               <View className='qnav-icon' style={{ background: getPlaceholderGrad(i) }}>
                 <Text className='qnav-abbr'>{item.abbr}</Text>
+                <Text className='qnav-arrow'>↗</Text>
               </View>
               <Text className='qnav-label'>{item.label}</Text>
             </View>
           ))}
           <View className='qnav-item' onClick={goToCases}>
-            <View className='qnav-icon' style={{ background: getPlaceholderGrad(QUICK_NAV.length) }}>
-              <Text className='qnav-abbr'>案</Text>
+              <View className='qnav-icon' style={{ background: getPlaceholderGrad(QUICK_NAV.length) }}>
+                <Text className='qnav-abbr'>案</Text>
+                <Text className='qnav-arrow'>↗</Text>
             </View>
             <Text className='qnav-label'>工程案例</Text>
           </View>
         </View>
       </View>
 
-      {/* ── COMPANY CARD ── */}
       {company && (company.company_name || company.slogan) && (
-        <View className='section'>
-          <View className='section-hd'>
-            <Text className='section-label'>关于我们</Text>
-          </View>
+        <View className='section section--company'>
           <View className='company-card' onClick={goToCompany}>
+            <Text className='company-card-no'>02 / 关于正通科技</Text>
             <View className='company-card-inner'>
-              <Text className='company-card-name'>{company.company_name || 'ARROW'}</Text>
+              <Text className='company-card-name'>{company.company_name || '正通科技'}</Text>
               {company.slogan ? <Text className='company-card-slogan'>{company.slogan}</Text> : null}
-              <Text className='company-card-cta'>了解我们 →</Text>
+              <View className='company-card-cta'><Text>了解品牌故事</Text><Text>→</Text></View>
             </View>
             <Text className='company-card-wm'>A</Text>
           </View>
         </View>
       )}
 
-      {/* ── HOT PRODUCTS ── */}
       <View className='section'>
         <View className='section-hd'>
-          <Text className='section-label'>热门产品</Text>
+          <View>
+            <Text className='section-eyebrow'>正通科技 · 精选产品</Text>
+            <Text className='section-label'>热门产品</Text>
+          </View>
           <View className='section-more' onClick={goToProducts}>
-            <Text className='section-more-text'>全部</Text>
+            <Text className='section-more-text'>查看全部 →</Text>
           </View>
         </View>
         <View className='hot-grid'>
@@ -156,11 +192,13 @@ export default function Index() {
               onClick={() => p && goToProduct(p.id)}
             >
               <View className='hot-img' style={{ background: getPlaceholderGrad(i) }}>
-                {p?.is_hot && <View className='hot-badge'><Text className='hot-badge-t'>HOT</Text></View>}
+                {p?.images?.[0]?.url && <Image className='hot-cover' src={p.images[0].url} mode='aspectFill' />}
+                <Text className='hot-number'>0{i + 1}</Text>
+                {p?.is_hot && <View className='hot-badge'><Text className='hot-badge-t'>精选</Text></View>}
               </View>
               <View className='hot-info'>
-                <Text className='hot-name'>{p?.name || '箭牌精选'}</Text>
-                <Text className='hot-cat'>{p?.category_name || '卫浴系列'}</Text>
+                <Text className='hot-name'>{p?.model || p?.name || '正通精选'}</Text>
+                <Text className='hot-cat'>{p?.category_name || '卫浴系列'} <Text className='hot-link'>↗</Text></Text>
               </View>
             </View>
           ))}
@@ -168,7 +206,7 @@ export default function Index() {
       </View>
 
       <View className='footer'>
-        <Text className='footer-text'>ARROW · 箭牌卫浴</Text>
+        <Text className='footer-text'>正通科技</Text>
       </View>
     </View>
   )

@@ -39,7 +39,7 @@ export function Sidebar() {
       <div className={styles.brand}>
         <span className={styles.brandMark}>A</span>
         <div className={styles.brandText}>
-          <span className={styles.brandEn}>ARROW</span>
+          <span className={styles.brandEn}>ZHENGTONGKEJI</span>
           <span className={styles.brandCn}>管理后台</span>
         </div>
       </div>

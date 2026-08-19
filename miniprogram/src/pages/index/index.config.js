@@ -1,4 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: '箭牌卫浴',
-  enablePullDownRefresh: true
+  navigationBarTitleText: '正通科技',
+  enablePullDownRefresh: true,
+  usingComponents: {}
 })

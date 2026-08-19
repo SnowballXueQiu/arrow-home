@@ -1,5 +1,5 @@
 const config = {
-  projectName: 'arrow-home',
+  projectName: 'zhengtongkeji',
   date: '2026-7-13',
   designWidth: 750,
   deviceRatio: {
@@ -13,7 +13,9 @@ const config = {
   plugins: [],
   defineConstants: {},
   copy: {
-    patterns: [],
+    patterns: [
+      { from: 'src/custom-tab-bar/icons', to: 'dist/custom-tab-bar/icons' }
+    ],
     options: {}
   },
   framework: 'react',

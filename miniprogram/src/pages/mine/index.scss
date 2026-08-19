@@ -1,139 +1,33 @@
-.mine {
-  background: var(--cream);
-  min-height: 100vh;
-  padding-bottom: 80rpx;
-}
-
-/* HEADER */
-.mine-header {
-  background: var(--white);
-  padding: 60rpx 40rpx 48rpx;
-  display: flex;
-  align-items: center;
-  gap: 32rpx;
-  border-bottom: 1rpx solid var(--border);
-}
-.mine-avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #2a2818 0%, #3e3220 100%);
-  border: 3rpx solid var(--gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.mine-avatar-text {
-  font-size: 48rpx;
-  font-weight: 300;
-  color: var(--gold);
-}
-.mine-user {
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
-}
-.mine-name {
-  font-size: 40rpx;
-  font-weight: 500;
-  color: var(--ink);
-  letter-spacing: 1rpx;
-}
-.mine-name--hint {
-  color: var(--gold);
-  font-weight: 400;
-}
-.mine-hint-sub {
-  font-size: 23rpx;
-  color: var(--ink-dim);
-}
-.mine-role-tag {
-  align-self: flex-start;
-  padding: 6rpx 20rpx;
-  background: var(--gold-pale);
-  border-radius: 100rpx;
-}
-.mine-role-text {
-  font-size: 21rpx;
-  color: var(--gold);
-  letter-spacing: 2rpx;
-}
-
-/* CARD */
-.mine-card {
-  margin: 24rpx 24rpx 0;
-  background: var(--white);
-  border-radius: 18rpx;
-  padding: 0 28rpx;
-  box-shadow: var(--shadow-sm);
-}
-.mine-card-label {
-  display: block;
-  font-size: 20rpx;
-  font-weight: 600;
-  letter-spacing: 4rpx;
-  color: var(--gold);
-  padding: 24rpx 0 12rpx;
-  border-bottom: 1rpx solid var(--border);
-}
-.mine-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 30rpx 0;
-  border-bottom: 1rpx solid var(--border);
-}
-.mine-row--last { border-bottom: none; }
-.mine-row-k {
-  font-size: 26rpx;
-  color: var(--ink-dim);
-}
-.mine-row-v {
-  font-size: 26rpx;
-  color: var(--ink);
-  font-weight: 500;
-}
-
-/* ACTIONS */
-.mine-actions {
-  margin: 32rpx 24rpx 0;
-}
-.mine-btn {
-  height: 96rpx;
-  border-radius: 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  &:active { opacity: 0.8; }
-}
-.mine-btn--in { background: var(--ink); }
-.mine-btn--out {
-  background: var(--white);
-  border: 1rpx solid rgba(200,60,60,0.2);
-}
-.mine-btn-text { font-size: 28rpx; font-weight: 500; letter-spacing: 3rpx; }
-.mine-btn-text--in { color: #fff; }
-.mine-btn-text--out { color: #c84040; }
-
-/* FOOTER */
-.mine-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10rpx;
-  padding: 72rpx 0 32rpx;
-}
-.mine-footer-brand {
-  font-size: 30rpx;
-  font-weight: 700;
-  letter-spacing: 12rpx;
-  color: var(--ink-dim);
-  opacity: 0.3;
-}
-.mine-footer-sub {
-  font-size: 20rpx;
-  color: var(--ink-dim);
-  letter-spacing: 3rpx;
-  opacity: 0.4;
-}
+.mine { min-height: 100vh; padding-bottom: 72rpx; background: var(--cream); }
+.mine-hero { position: relative; min-height: 342rpx; overflow: hidden; padding: 50rpx 34rpx; background: var(--forest); box-sizing: border-box; }
+.mine-hero-no { display: block; position: relative; z-index: 1; font-size: 17rpx; letter-spacing: 3rpx; color: var(--clay-light); }
+.mine-hero-title { display: block; position: relative; z-index: 1; max-width: 540rpx; margin-top: 58rpx; font-family: Georgia, 'Songti SC', serif; font-size: 48rpx; line-height: 1.2; color: #fff; }
+.mine-hero-copy { display: block; position: relative; z-index: 1; margin-top: 14rpx; font-size: 22rpx; color: rgba(255,255,255,.68); }
+.mine-hero-mark { position: absolute; right: -14rpx; bottom: -112rpx; font-family: Georgia, serif; font-size: 450rpx; line-height: 1; color: rgba(255,255,255,.05); }
+.mine-profile { display: flex; align-items: center; gap: 20rpx; margin: -36rpx 24rpx 0; padding: 22rpx; position: relative; z-index: 2; background: var(--paper); border-radius: 8rpx; box-shadow: var(--shadow-md); }
+.mine-avatar { display: flex; align-items: center; justify-content: center; width: 94rpx; height: 94rpx; flex-shrink: 0; background: var(--clay-pale); border-radius: 50%; border: 1rpx solid var(--clay-light); }
+.mine-avatar-text { font-family: Georgia, serif; font-size: 40rpx; color: var(--clay); }
+.mine-user { display: flex; flex: 1; flex-direction: column; gap: 7rpx; }
+.mine-name { font-size: 29rpx; font-weight: 600; color: var(--forest); }
+.mine-name--hint { font-weight: 500; }
+.mine-hint-sub { font-size: 21rpx; color: var(--ink-dim); }
+.mine-role-tag { align-self: flex-start; padding: 4rpx 11rpx; background: var(--clay-pale); border-radius: 2rpx; }
+.mine-role-text { font-size: 17rpx; letter-spacing: 1rpx; color: var(--clay); }
+.mine-section { margin: 52rpx 24rpx 0; }
+.mine-section-label { display: block; margin-bottom: 15rpx; font-size: 17rpx; font-weight: 700; letter-spacing: 2rpx; color: var(--clay); }
+.mine-card { padding: 0 20rpx; background: var(--paper); border-radius: 8rpx; }
+.mine-row { display: flex; align-items: center; justify-content: space-between; min-height: 82rpx; border-bottom: 1rpx solid var(--border); }
+.mine-row--last { border-bottom: 0; }
+.mine-row-k { font-size: 23rpx; color: var(--ink-dim); }
+.mine-row-v { font-size: 23rpx; font-weight: 500; color: var(--ink); }
+.mine-actions { margin: 40rpx 24rpx 0; }
+.mine-btn { display: flex; align-items: center; justify-content: space-between; height: 94rpx; padding: 0 26rpx; box-sizing: border-box; border-radius: 5rpx; }
+.mine-btn--in { background: var(--forest); }
+.mine-btn--out { border: 1rpx solid var(--border); background: var(--paper); }
+.mine-btn-text { font-size: 25rpx; letter-spacing: 2rpx; }
+.mine-btn-text--in, .mine-btn--in .mine-btn-arrow { color: #fff; }
+.mine-btn-text--out, .mine-btn--out .mine-btn-arrow { color: var(--forest); }
+.mine-btn-arrow { font-family: Georgia, serif; font-size: 32rpx; }
+.mine-footer { display: flex; flex-direction: column; align-items: center; gap: 10rpx; padding: 82rpx 0 20rpx; }
+.mine-footer-brand { font-family: Georgia, serif; font-size: 30rpx; letter-spacing: 10rpx; color: var(--forest); }
+.mine-footer-sub { font-size: 16rpx; letter-spacing: 3rpx; color: var(--ink-dim); }

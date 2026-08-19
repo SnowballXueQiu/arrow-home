@@ -69,6 +69,7 @@ export default function ProductDetail() {
             </SwiperItem>
           )}
         </Swiper>
+        <Text className='gallery-edition'>正通科技 · 产品 0{product.id || 1}</Text>
         {slideCount > 1 && (
           <View className='gallery-counter'>
             <Text className='gallery-counter-t'>{activeImg + 1}/{slideCount}</Text>
@@ -88,6 +89,9 @@ export default function ProductDetail() {
         </View>
 
         <Text className='detail-name'>{product.model || product.name}</Text>
+        {product.name && product.name !== product.model && (
+          <Text className='detail-subname'>{product.name}</Text>
+        )}
 
         {/* PRICE */}
         {hasPrice && (
@@ -145,7 +149,7 @@ export default function ProductDetail() {
         )}
 
         <View className='detail-footer'>
-          <Text className='detail-footer-text'>ARROW · 箭牌卫浴</Text>
+          <Text className='detail-footer-text'>正通科技</Text>
         </View>
       </View>
     </View>

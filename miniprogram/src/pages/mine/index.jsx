@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { View, Text } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { request } from '../../utils/api'
 import './index.scss'
 
@@ -9,6 +9,10 @@ export default function Mine() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadUser() }, [])
+  useDidShow(() => {
+    const tabbar = Taro.getCurrentInstance().page?.getTabBar?.()
+    tabbar?.setData({ selected: 2 })
+  })
 
   const loadUser = async () => {
     try {
@@ -52,61 +56,63 @@ export default function Mine() {
 
   return (
     <View className='mine'>
-      {/* HEADER */}
-      <View className='mine-header'>
+      <View className='mine-hero'>
+        <Text className='mine-hero-no'>正通科技 · 会员中心</Text>
+        <Text className='mine-hero-title'>{user ? '您好，欢迎回来' : '发现美好卫浴生活'}</Text>
+        <Text className='mine-hero-copy'>{user ? '您的专属产品与服务信息' : '登录后获取更完整的服务体验'}</Text>
+        <Text className='mine-hero-mark'>A</Text>
+      </View>
+
+      <View className='mine-profile'>
         <View className='mine-avatar'>
-          <Text className='mine-avatar-text'>
-            {user ? (user.nickname?.charAt(0)?.toUpperCase() || 'A') : '?'}
-          </Text>
+          <Text className='mine-avatar-text'>{user ? (user.nickname?.charAt(0)?.toUpperCase() || 'A') : 'A'}</Text>
         </View>
         {user ? (
           <View className='mine-user'>
             <Text className='mine-name'>{user.nickname || '箭牌用户'}</Text>
-            <View className='mine-role-tag'>
-              <Text className='mine-role-text'>{user.role === 'admin' ? '管理员' : '经销商'}</Text>
-            </View>
+            <View className='mine-role-tag'><Text className='mine-role-text'>{user.role === 'admin' ? '管理员' : '经销商'}</Text></View>
           </View>
         ) : (
           <View className='mine-user' onClick={handleLogin}>
-            <Text className='mine-name mine-name--hint'>点击登录</Text>
-            <Text className='mine-hint-sub'>查看个人信息与权限</Text>
+            <Text className='mine-name mine-name--hint'>登录您的账号</Text>
+            <Text className='mine-hint-sub'>微信授权登录 →</Text>
           </View>
         )}
       </View>
 
-      {/* INFO */}
       {user && (
-        <View className='mine-card'>
-          <Text className='mine-card-label'>账户信息</Text>
-          {[
-            { k: '账号', v: user.username || '—' },
-            { k: '手机', v: user.phone || '—' },
-            { k: '角色', v: user.role === 'admin' ? '管理员' : '经销商' },
-          ].map((row, i, arr) => (
-            <View key={row.k} className={`mine-row${i === arr.length - 1 ? ' mine-row--last' : ''}`}>
-              <Text className='mine-row-k'>{row.k}</Text>
-              <Text className='mine-row-v'>{row.v}</Text>
-            </View>
-          ))}
+        <View className='mine-section'>
+          <Text className='mine-section-label'>账户资料</Text>
+          <View className='mine-card'>
+            {[
+              { k: '账号', v: user.username || '—' },
+              { k: '联系电话', v: user.phone || '未填写' },
+              { k: '身份', v: user.role === 'admin' ? '管理员' : '经销商' },
+            ].map((row, i, arr) => (
+              <View key={row.k} className={`mine-row${i === arr.length - 1 ? ' mine-row--last' : ''}`}>
+                <Text className='mine-row-k'>{row.k}</Text>
+                <Text className='mine-row-v'>{row.v}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       )}
 
-      {/* ACTIONS */}
       <View className='mine-actions'>
         {user ? (
           <View className='mine-btn mine-btn--out' onClick={handleLogout}>
-            <Text className='mine-btn-text mine-btn-text--out'>退出登录</Text>
+            <Text className='mine-btn-text mine-btn-text--out'>退出登录</Text><Text className='mine-btn-arrow'>→</Text>
           </View>
         ) : (
           <View className='mine-btn mine-btn--in' onClick={handleLogin}>
-            <Text className='mine-btn-text mine-btn-text--in'>立即登录</Text>
+            <Text className='mine-btn-text mine-btn-text--in'>立即登录</Text><Text className='mine-btn-arrow'>→</Text>
           </View>
         )}
       </View>
 
       <View className='mine-footer'>
-        <Text className='mine-footer-brand'>ARROW</Text>
-        <Text className='mine-footer-sub'>箭牌卫浴 · 品质之选</Text>
+        <Text className='mine-footer-brand'>正通科技</Text>
+        <Text className='mine-footer-sub'>美好卫浴生活</Text>
       </View>
     </View>
   )

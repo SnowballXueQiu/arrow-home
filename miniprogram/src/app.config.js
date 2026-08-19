@@ -9,10 +9,11 @@ export default defineAppConfig({
     'pages/cases/detail',
   ],
   tabBar: {
-    color: '#999999',
-    selectedColor: '#1a1a1a',
-    backgroundColor: '#ffffff',
-    borderStyle: 'white',
+    custom: true,
+    color: '#92958d',
+    selectedColor: '#b95f3c',
+    backgroundColor: '#fbfaf6',
+    borderStyle: 'black',
     list: [
       {
         pagePath: 'pages/index/index',
@@ -31,7 +32,7 @@ export default defineAppConfig({
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#ffffff',
-    navigationBarTitleText: '箭牌卫浴',
+    navigationBarTitleText: '正通科技',
     navigationBarTextStyle: 'black'
   },
   lazyCodeLoading: 'requiredComponents'

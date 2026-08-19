@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { View, Text, Image, Input, ScrollView } from '@tarojs/components'
-import Taro, { usePullDownRefresh } from '@tarojs/taro'
+import Taro, { useDidShow, usePullDownRefresh } from '@tarojs/taro'
 import { request } from '../../utils/api'
 import { getPlaceholderGrad } from '../../utils/constants'
 import './index.scss'
@@ -24,6 +24,10 @@ export default function Products() {
 
   usePullDownRefresh(() => {
     loadProducts(1, activeL3 ?? activeL2, keyword).then(() => Taro.stopPullDownRefresh())
+  })
+  useDidShow(() => {
+    const tabbar = Taro.getCurrentInstance().page?.getTabBar?.()
+    tabbar?.setData({ selected: 1 })
   })
 
   const loadCategories = async () => {
@@ -89,12 +93,16 @@ export default function Products() {
   return (
     <View className='products'>
       <View className='products-hd'>
-        <Text className='products-title'>产品目录</Text>
+        <Text className='products-eyebrow'>正通科技 · 产品系列</Text>
+        <View className='products-heading-row'>
+          <Text className='products-title'>产品目录</Text>
+          <Text className='products-count'>共 {products.length || 0} 件</Text>
+        </View>
       </View>
 
       <View className='search-wrap'>
         <View className='search-row'>
-          <Text className='search-icon-text'>搜</Text>
+          <Text className='search-icon-text'>⌕</Text>
           <Input
             className='search-input'
             placeholder='名称或型号'
@@ -108,7 +116,7 @@ export default function Products() {
         </View>
       </View>
 
-      {/* L2 category tabs */}
+      <View className='filter-caption'><Text>按空间探索</Text><Text>筛选</Text></View>
       <ScrollView className='cat-scroll cat-scroll--l2' scrollX showScrollbar={false}>
         <View className='cat-row'>
           <View
@@ -161,7 +169,8 @@ export default function Products() {
             <View key={p.id} className='prod-card' onClick={() => goDetail(p.id)}>
               <View className='prod-img' style={coverUrl ? {} : { background: getPlaceholderGrad(i) }}>
                 {coverUrl && <Image className='prod-cover' src={coverUrl} mode='aspectFill' />}
-                {p.is_hot && <View className='prod-hot'><Text className='prod-hot-t'>热</Text></View>}
+                <Text className='prod-index'>0{(i + 1) % 10}</Text>
+                {p.is_hot && <View className='prod-hot'><Text className='prod-hot-t'>热销</Text></View>}
               </View>
               <View className='prod-info'>
                 <Text className='prod-name'>{p.model || p.name}</Text>
@@ -177,7 +186,7 @@ export default function Products() {
                     )}
                   </View>
                 ) : (
-                  <Text className='prod-cat'>{p.category_name}</Text>
+                  <Text className='prod-cat'>{p.category_name || '正通科技 · 产品系列'} <Text className='prod-arrow'>↗</Text></Text>
                 )}
               </View>
             </View>

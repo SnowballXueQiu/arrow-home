@@ -49,11 +49,12 @@ export default function CompanyPage() {
     <View className='company'>
       {/* Hero */}
       <View className='co-hero'>
-        <Text className='co-wm'>A</Text>
+        <Text className='co-hero-no'>正通科技 · 始于 2022</Text>
         <View className='co-hero-body'>
-          <Text className='co-name'>{company.company_name || '箭牌卫浴'}</Text>
+          <Text className='co-name'>{company.company_name || '正通科技'}</Text>
           {company.slogan ? <Text className='co-slogan'>{company.slogan}</Text> : null}
         </View>
+        <Text className='co-wm'>A</Text>
       </View>
 
       {/* About */}
@@ -79,7 +80,7 @@ export default function CompanyPage() {
           <View className='co-contact-card'>
             {company.phone ? (
               <View className='co-contact-row' onClick={callPhone}>
-                <Text className='co-contact-icon'>电</Text>
+                <Text className='co-contact-icon co-contact-icon--phone'>☎</Text>
                 <View className='co-contact-info'>
                   <Text className='co-contact-key'>联系电话</Text>
                   <Text className='co-contact-val co-contact-val--link'>{company.phone}</Text>
@@ -88,7 +89,7 @@ export default function CompanyPage() {
             ) : null}
             {company.wechat ? (
               <View className='co-contact-row'>
-                <Text className='co-contact-icon'>微</Text>
+                <Text className='co-contact-icon co-contact-icon--wechat'>◎</Text>
                 <View className='co-contact-info'>
                   <Text className='co-contact-key'>微信号</Text>
                   <Text className='co-contact-val'>{company.wechat}</Text>
@@ -97,7 +98,7 @@ export default function CompanyPage() {
             ) : null}
             {company.email ? (
               <View className='co-contact-row'>
-                <Text className='co-contact-icon'>邮</Text>
+                <Text className='co-contact-icon co-contact-icon--email'>✉</Text>
                 <View className='co-contact-info'>
                   <Text className='co-contact-key'>电子邮箱</Text>
                   <Text className='co-contact-val'>{company.email}</Text>
@@ -106,7 +107,7 @@ export default function CompanyPage() {
             ) : null}
             {company.address ? (
               <View className='co-contact-row co-contact-row--last'>
-                <Text className='co-contact-icon'>址</Text>
+                <Text className='co-contact-icon co-contact-icon--address'>⌖</Text>
                 <View className='co-contact-info'>
                   <Text className='co-contact-key'>公司地址</Text>
                   <Text className='co-contact-val'>{company.address}</Text>
@@ -118,7 +119,7 @@ export default function CompanyPage() {
       )}
 
       <View className='co-footer'>
-        <Text className='co-footer-text'>ARROW · 箭牌卫浴</Text>
+        <Text className='co-footer-text'>正通科技</Text>
       </View>
     </View>
   )

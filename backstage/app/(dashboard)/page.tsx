@@ -64,7 +64,7 @@ export default function DashboardPage() {
       <div className={styles.topBar}>
         <div>
           <h1 className={styles.greeting}>数据概览</h1>
-          <p className={styles.sub}>ARROW 箭牌卫浴 · 产品管理系统</p>
+          <p className={styles.sub}>ZHENGTONGKEJI 正通科技 · 产品管理系统</p>
         </div>
       </div>
 

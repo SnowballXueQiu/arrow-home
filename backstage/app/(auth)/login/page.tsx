@@ -41,8 +41,8 @@ export default function LoginPage() {
         <div className={styles.logo}>
           <span className={styles.logoMark}>A</span>
           <div className={styles.logoText}>
-            <span className={styles.logoEn}>ARROW</span>
-            <span className={styles.logoCn}>箭牌卫浴管理系统</span>
+            <span className={styles.logoEn}>ZHENGTONGKEJI</span>
+            <span className={styles.logoCn}>正通科技管理系统</span>
           </div>
         </div>
 

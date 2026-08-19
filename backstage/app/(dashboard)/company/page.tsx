@@ -132,7 +132,7 @@ export default function CompanyPage() {
                   className={styles.input}
                   value={val("company_name")}
                   onChange={(e) => set("company_name", e.target.value)}
-                  placeholder="箭牌卫浴"
+                  placeholder="正通科技"
                 />
               </div>
               <div className={styles.formGroup}>

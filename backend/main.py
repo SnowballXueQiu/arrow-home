@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="箭牌卫浴产品展示API", lifespan=lifespan)
+app = FastAPI(title="正通科技产品展示API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

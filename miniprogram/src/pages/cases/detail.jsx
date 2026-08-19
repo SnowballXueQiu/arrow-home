@@ -76,10 +76,12 @@ export default function CaseDetail() {
             <Text className='cd-counter-t'>{activeImg + 1}/{slideCount}</Text>
           </View>
         )}
+        <Text className='cd-edition'>正通科技 · 工程案例</Text>
       </View>
 
       {/* Body */}
       <View className='cd-body'>
+        <Text className='cd-kicker'>工程案例</Text>
         <Text className='cd-title'>{caseData.name}</Text>
 
         {descs.length > 0 && (
@@ -93,7 +95,7 @@ export default function CaseDetail() {
         )}
 
         <View className='cd-footer'>
-          <Text className='cd-footer-text'>ARROW · 箭牌卫浴</Text>
+          <Text className='cd-footer-text'>正通科技</Text>
         </View>
       </View>
     </View>

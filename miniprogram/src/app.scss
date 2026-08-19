@@ -1,23 +1,30 @@
 page {
-  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
-  background: #f5f4f0;
-  color: #1a1a1a;
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #f2f0eb;
+  color: #1d211f;
   font-size: 28rpx;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-:root {
-  --ink:        #1a1a1a;
-  --ink-mid:    #555;
-  --ink-dim:    #999;
-  --cream:      #f5f4f0;
-  --cream-dark: #ede9e2;
-  --gold:       #b8975a;
-  --gold-light: #d4b47a;
-  --gold-pale:  #f0e8d6;
+/* 小程序页面样式相互隔离，变量需要挂在 page 上才能被各页面继承。 */
+page {
+  --ink:        #1d211f;
+  --ink-mid:    #5e625e;
+  --ink-dim:    #92958d;
+  --cream:      #f2f0eb;
+  --cream-dark: #e7e3da;
+  --paper:      #fbfaf6;
+  --forest:     #1d3029;
+  --forest-mid: #31483d;
+  --clay:       #b95f3c;
+  --clay-light: #de9b78;
+  --clay-pale:  #f3dfd3;
+  --gold:       #b95f3c;
+  --gold-light: #de9b78;
+  --gold-pale:  #f3dfd3;
   --white:      #ffffff;
-  --border:     rgba(0,0,0,0.08);
-  --shadow-sm:  0 2rpx 16rpx rgba(0,0,0,0.06);
-  --shadow-md:  0 6rpx 32rpx rgba(0,0,0,0.10);
+  --border:     rgba(29,33,31,0.10);
+  --shadow-sm:  0 8rpx 24rpx rgba(30,37,32,0.06);
+  --shadow-md:  0 20rpx 48rpx rgba(30,37,32,0.12);
 }

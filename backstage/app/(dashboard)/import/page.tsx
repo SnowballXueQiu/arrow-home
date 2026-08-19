@@ -93,7 +93,7 @@ export default function ImportPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `arrow-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `zhengtongkeji-export-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`已导出 ${data.categories.length} 个品类、${data.products.length} 个产品、${data.cases?.length ?? 0} 个案例`);
@@ -110,7 +110,7 @@ export default function ImportPage() {
       const text = await file.text();
       const data = JSON.parse(text) as ExportData;
       if (!Array.isArray(data.categories) || !Array.isArray(data.products)) {
-        toast.error("文件格式不正确，请上传 arrow-export-*.json 备份文件");
+        toast.error("文件格式不正确，请上传 zhengtongkeji-export-*.json 备份文件");
         return;
       }
       setBackupData(data);
@@ -384,7 +384,7 @@ export default function ImportPage() {
             <div className={styles.backupIcon}><DatabaseBackup size={22} /></div>
             <div className={styles.backupInfo}>
               <div className={styles.backupTitle}>完整数据恢复</div>
-              <div className={styles.backupDesc}>上传 <code>arrow-export-*.json</code> 备份文件，自动恢复所有品类和产品数据（跳过已存在的品类）</div>
+              <div className={styles.backupDesc}>上传 <code>zhengtongkeji-export-*.json</code> 备份文件，自动恢复所有品类和产品数据（跳过已存在的品类）</div>
             </div>
           </div>
         )}
